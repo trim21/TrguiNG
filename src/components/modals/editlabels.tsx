@@ -89,12 +89,12 @@ export function EditLabelsModal(props: ModalState) {
                 onClose={props.close}
                 onSave={onSave}
                 centered
-                title="Edit torrent labels"
+                title="修改用户标签"
             >
                 {rpcVersion < 16
-                    ? <Text color="red" fz="lg">Labels feature requires transmission 3.0 or later</Text>
+                    ? <Text color="red" fz="lg">标签功能仅支持 transmission 3.0 或以上版本</Text>
                     : <>
-                        <Text mb="md">Enter new labels for</Text>
+                        <Text mb="md">输入新的用户标签</Text>
                         <TorrentsNames />
                     </>}
                 <Box mih="17rem">

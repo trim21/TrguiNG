@@ -24,9 +24,10 @@ import * as StatusIcons from "./statusicons";
 import type { FilterSectionName, SectionsVisibility, StatusFilterName } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
 import { Box, Button, Divider, Flex, Menu, Portal } from "@mantine/core";
-import { eventHasModKey, useForceRender } from "trutil";
+import {bytesToHumanReadableStr, eventHasModKey, useForceRender} from "trutil";
 import { useContextMenu } from "./contextmenu";
 import { MemoSectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
+import {useServerTorrentData} from "../rpc/torrent";
 
 export interface TorrentFilter {
     id: string,
@@ -46,18 +47,23 @@ interface StatusFilter extends NamedFilter {
 
 const statusFilters: StatusFilter[] = [
     {
-        name: "All Torrents",
+        name: "全部",
         filter: (t: Torrent) => true,
         icon: StatusIcons.All,
         required: true,
     },
     {
-        name: "Downloading",
+        name: "下载中",
         filter: (t: Torrent) => t.status === Status.downloading,
         icon: StatusIcons.Downloading,
     },
     {
-        name: "Completed",
+        name: "已暂停",
+        filter: (t: Torrent) => t.status === Status.stopped,
+        icon: StatusIcons.Stopped,
+    },
+    {
+        name: "正在做种",
         filter: (t: Torrent) => {
             return t.status === Status.seeding ||
                 (t.sizeWhenDone > 0 && Math.max(t.sizeWhenDone - t.haveValid, 0) === 0);
@@ -65,36 +71,7 @@ const statusFilters: StatusFilter[] = [
         icon: StatusIcons.Completed,
     },
     {
-        name: "Active",
-        filter: (t: Torrent) => {
-            return t.rateDownload > 0 || t.rateUpload > 0;
-        },
-        icon: StatusIcons.Active,
-    },
-    {
-        name: "Inactive",
-        filter: (t: Torrent) => {
-            return t.rateDownload === 0 && t.rateUpload === 0 && t.status !== Status.stopped;
-        },
-        icon: StatusIcons.Inactive,
-    },
-    {
-        name: "Running",
-        filter: (t: Torrent) => t.status !== Status.stopped,
-        icon: StatusIcons.Running,
-    },
-    {
-        name: "Stopped",
-        filter: (t: Torrent) => t.status === Status.stopped,
-        icon: StatusIcons.Stopped,
-    },
-    {
-        name: "Error",
-        filter: (t: Torrent) => (t.error !== 0 || t.cachedError !== ""),
-        icon: StatusIcons.Error,
-    },
-    {
-        name: "Waiting",
+        name: "正在校验",
         filter: (t: Torrent) => [
             Status.verifying,
             Status.queuedToVerify,
@@ -102,14 +79,38 @@ const statusFilters: StatusFilter[] = [
         icon: StatusIcons.Waiting,
     },
     {
-        name: "Magnetizing",
+        name: "活动中",
+        filter: (t: Torrent) => {
+            return t.rateDownload > 0 || t.rateUpload > 0;
+        },
+        icon: StatusIcons.Active,
+    },
+    {
+        name: "未活动",
+        filter: (t: Torrent) => {
+            return t.rateDownload === 0 && t.rateUpload === 0 && t.status !== Status.stopped;
+        },
+        icon: StatusIcons.Inactive,
+    },
+    {
+        name: "工作中",
+        filter: (t: Torrent) => t.status !== Status.stopped,
+        icon: StatusIcons.Running,
+    },
+    {
+        name: "错误",
+        filter: (t: Torrent) => (t.error !== 0 || t.cachedError !== ""),
+        icon: StatusIcons.Error,
+    },
+    {
+        name: "磁力链接",
         filter: (t: Torrent) => t.status === Status.downloading && t.pieceCount === 0,
         icon: StatusIcons.Magnetizing,
     },
 ];
 
 const noLabelsFilter: NamedFilter = {
-    name: "<No labels>",
+    name: "<无标签>",
     filter: (t: Torrent) => t.labels?.length === 0,
     icon: StatusIcons.Label,
 };
@@ -135,6 +136,9 @@ interface FilterRowProps extends WithCurrentFilters {
 }
 
 const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
+    const serverData = useServerTorrentData();
+    const dirTorrents = serverData.torrents.filter(props.filter.filter);
+    const dirSize = bytesToHumanReadableStr(dirTorrents.reduce((p, t) => p + (t.sizeWhenDone as number), 0));
     return <Flex align="center" gap="sm" px="xs"
         className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
         onClick={(event) => {
@@ -146,6 +150,7 @@ const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
         <div className="icon-container"><props.filter.icon /></div>
         <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.filter.name}</div>
         <div style={{ flexShrink: 0 }}>{`(${props.count})`}</div>
+        <div style={{ flexShrink: 1, marginLeft: "auto" }}>{`[${dirSize}] `}</div>
     </Flex>;
 });
 
@@ -191,6 +196,10 @@ function DirFilterRow(props: DirFilterRowProps) {
 
     const expandable = props.dir.subdirs.size > 0;
 
+    const serverData = useServerTorrentData();
+    const dirTorrents = serverData.torrents.filter(filter);
+    const dirSize = bytesToHumanReadableStr(dirTorrents.reduce((p, t) => p + (t.sizeWhenDone as number), 0));
+
     return (
         <Flex align="center" gap="sm"
             style={{ paddingLeft: `${props.dir.level * 1.4 + 0.25}em`, cursor: "default" }}
@@ -209,8 +218,9 @@ function DirFilterRow(props: DirFilterRowProps) {
                     : <Icon.Folder size="1.1rem" />
                 }
             </div>
-            <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.dir.name}</div>
+            <div style={{ flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{props.dir.name}</div>
             <div style={{ flexShrink: 0 }}>{`(${props.dir.count})`}</div>
+            <div style={{ flexShrink: 1, marginLeft: "auto" }}>{`[${dirSize}] `}</div>
         </Flex>
     );
 }
@@ -346,6 +356,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         return [labels, trackers];
     }, [config, torrents]);
 
+
     const [sections, setSections] = useReducer(
         (_: SectionsVisibility<FilterSectionName>, sections: SectionsVisibility<FilterSectionName>) => {
             setCurrentFilters({ verb: "set", filter: { id: "", filter: DefaultFilter } });
@@ -474,7 +485,7 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                     onMouseEnter={openStatusFiltersSubmenu}
                     onMouseDown={(e) => { e.stopPropagation(); }}
                 >
-                    Status filters
+                    状态项
                 </Menu.Item>
                 <Menu.Divider/>
                 <Menu.Item
@@ -482,25 +493,25 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                     onMouseEnter={closeStatusFiltersSubmenu}
                     onMouseDown={onCompactDirectoriesClick}
                 >
-                    Compact Directories
+                    目录简洁展示
                 </Menu.Item>
             </MemoSectionsContextMenu>
-            {sections[sectionsMap.Status].visible && <div style={{ order: sectionsMap.Status }}>
-                <Divider mx="sm" label="Status" labelPosition="center" />
+            {sections[sectionsMap["种子状态"]]?.visible && <div style={{ order: sectionsMap["种子状态"] }}>
+                <Divider mx="sm" label="种子状态" labelPosition="center" />
                 {statusFilters.map((f) =>
                     (f.required === true || statusFiltersVisibility[f.name]) && <FilterRow key={`status-${f.name}`}
                         id={`status-${f.name}`} filter={f}
                         count={torrents.filter(f.filter).length}
                         currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />)}
             </div>}
-            {sections[sectionsMap.Directories].visible && <div style={{ order: sectionsMap.Directories }}>
-                <Divider mx="sm" mt="md" label="Directories" labelPosition="center" />
+            {sections[sectionsMap["数据目录"]]?.visible && <div style={{ order: sectionsMap["数据目录"] }}>
+                <Divider mx="sm" mt="md" label="数据目录" labelPosition="center" />
                 {dirs.map((d) =>
                     <DirFilterRow key={`dir-${d.path}`} id={`dir-${d.path}`}
                         dir={d} expandedReducer={expandedReducer} {...{ torrents, currentFilters, setCurrentFilters }} />)}
             </div>}
-            {sections[sectionsMap.Labels].visible && <div style={{ order: sectionsMap.Labels }}>
-                <Divider mx="sm" mt="md" label="Labels" labelPosition="center" />
+            {sections[sectionsMap["用户标签"]]?.visible && <div style={{ order: sectionsMap["用户标签"] }}>
+                <Divider mx="sm" mt="md" label="用户标签" labelPosition="center" />
                 <FilterRow
                     id="nolabels" filter={noLabelsFilter}
                     count={torrents.filter(noLabelsFilter.filter).length}
@@ -510,8 +521,8 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                         count={labels[label]}
                         currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />)}
             </div>}
-            {sections[sectionsMap.Trackers].visible && <div style={{ order: sectionsMap.Trackers }}>
-                <Divider mx="sm" mt="md" label="Trackers" labelPosition="center" />
+            {sections[sectionsMap["服务器分布"]]?.visible && <div style={{ order: sectionsMap["服务器分布"] }}>
+                <Divider mx="sm" mt="md" label="服务器分布" labelPosition="center" />
                 {Object.keys(trackers).sort().map((tracker) =>
                     <TrackerFilterRow key={`trackers-${tracker}`} tracker={tracker}
                         count={trackers[tracker]}

@@ -60,9 +60,9 @@ export function SaveCancelModal({ onSave, onClose, children, saveLoading, ...oth
             <Divider my="sm" />
             <Group position="center" spacing="md">
                 <Button onClick={onSave} variant="filled" data-autofocus>
-                    {saveLoading === true ? <Loader size="1rem" /> : "Save"}
+                    {saveLoading === true ? <Loader size="1rem" /> : "保存"}
                 </Button>
-                <Button onClick={onClose} variant="light">Cancel</Button>
+                <Button onClick={onClose} variant="light">取消</Button>
             </Group>
         </HkModal>
     );
@@ -132,7 +132,7 @@ export function useTorrentLocation(): LocationData {
         const mappedLocation = pathMapFromServer(path, serverConfig);
         console.log("Mapped location: ", mappedLocation);
         dialogOpen({
-            title: "Select directory",
+            title: "选择目录",
             defaultPath: mappedLocation === "" ? undefined : mappedLocation,
             directory: true,
         }).then((directory) => {
@@ -203,7 +203,7 @@ export function TorrentLocation(props: LocationData) {
                         </Menu.Dropdown>
                     </Menu>
                 } />
-            {TAURI && <Button onClick={props.browseHandler} disabled={props.disabled}>Browse</Button>}
+            {TAURI && <Button onClick={props.browseHandler} disabled={props.disabled}>选择目录</Button>}
         </Group>
     );
 }

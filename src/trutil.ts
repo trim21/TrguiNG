@@ -45,7 +45,7 @@ export function byteRateToHumanReadableStr(value: number): string {
     else return `${bytesToHumanReadableStr(value)}/s`;
 }
 
-export function secondsToHumanReadableStr(value: number): string {
+export function secondsToHumanReadableStr(value: number, coarse: boolean = true): string {
     let duration = {
         days: Math.floor(value / 86400),
         hours: Math.floor(value / 3600) % 24,
@@ -53,13 +53,15 @@ export function secondsToHumanReadableStr(value: number): string {
         seconds: value % 60,
     };
     // Make it coarse
-    if (duration.days >= 10) duration = { days: duration.days, hours: 0, minutes: 0, seconds: 0 };
-    else if (duration.days > 0) duration = { ...duration, minutes: 0, seconds: 0 };
-    else if (duration.days > 0 || duration.hours > 0) duration.seconds = 0;
+    if (coarse) {
+        if (duration.days >= 10) duration = {days: duration.days, hours: 0, minutes: 0, seconds: 0};
+        else if (duration.days > 0) duration = {...duration, minutes: 0, seconds: 0};
+        else if (duration.days > 0 || duration.hours > 0) duration.seconds = 0;
+    }
     let s = "";
     if (duration.days > 0) s = `${duration.days}d`;
-    if (duration.hours > 0) s = (s !== "" ? s + " " : "") + `${duration.hours}hr`;
-    if (duration.minutes > 0) s = (s !== "" ? s + " " : "") + `${duration.minutes}min`;
+    if (duration.hours > 0) s = (s !== "" ? s + " " : "") + `${duration.hours}h`;
+    if (duration.minutes > 0) s = (s !== "" ? s + " " : "") + `${duration.minutes}m`;
     if (duration.seconds > 0) s = (s !== "" ? s + " " : "") + `${duration.seconds}s`;
     return s;
 }

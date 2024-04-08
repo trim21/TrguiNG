@@ -118,12 +118,12 @@ export function Statusbar({ session, torrents, filteredTorrents, selectedTorrent
                 </Menu.Item>
             </MemoSectionsContextMenu>
             {sections[sectionsMap.Connection].visible &&
-                <div style={{ flex: "1 1 23%", order: sectionsMap.Connection }}>
+                <div style={{ flex: "1 1 20%", order: sectionsMap.Connection }}>
                     <Box component="span" my="auto" mr="xs"><Icon.Diagram2 /></Box>
-                    <span>{`${session?.version as string ?? "<not connected>"} at ${hostname}`}</span>
+                    <span>{`${session?.version as string ?? "<未连接>"} at ${hostname}`}</span>
                 </div>}
             {sections[sectionsMap["Download speed "]].visible &&
-                <div style={{ flex: "1 1 15%", order: sectionsMap["Download speed "] }}>
+                <div style={{ flex: "1 1 10%", order: sectionsMap["Download speed "] }}>
                     <Box component="span" my="auto" mr="xs">{showGlobalSpeeds && <Icon.Globe />}<Icon.ArrowDown /></Box>
                     <span>{`${downRate}/s (${byteRateToHumanReadableStr(serverFields.downRateLimit * 1024)})`}</span>
                 </div>}
@@ -135,15 +135,15 @@ export function Statusbar({ session, torrents, filteredTorrents, selectedTorrent
             {sections[sectionsMap["Free space"]].visible &&
                 <div style={{ flex: "1 1 12%", order: sectionsMap["Free space"] }}>
                     <Box component="span" my="auto" mr="xs"><Icon.Hdd /></Box>
-                    <span>{`Free: ${bytesToHumanReadableStr(serverFields.free)}`}</span>
+                    <span>{`剩余空间: ${bytesToHumanReadableStr(serverFields.free)}`}</span>
                 </div>}
             {sections[sectionsMap.Total].visible &&
                 <div style={{ flex: "1 1 12%", order: sectionsMap.Total }}>
-                    {`Total: ${sizeTotal}`}
+                    {`列表总大小: ${sizeTotal}`}
                 </div>}
             {sections[sectionsMap.Selected].visible &&
-                <div style={{ flex: "1 1 23%", order: sectionsMap.Selected }}>
-                    {`Selected: ${sizeSelected}, done ${sizeDone}, left ${sizeLeft}`}
+                <div style={{ flex: "1 1 20%", order: sectionsMap.Selected }}>
+                    {`选中: ${sizeSelected}, 完成 ${sizeDone}, 剩余 ${sizeLeft}`}
                 </div>}
             {!TAURI &&
                 <div style={{ flexShrink: 0, display: "flex", order: 100 }}>

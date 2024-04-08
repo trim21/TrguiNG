@@ -45,15 +45,15 @@ function DownloadBar(props: { torrent: Torrent }) {
     let prefix = "";
     let percent = props.torrent.percentDone as number;
     if (props.torrent.status === Status.verifying) {
-        prefix = "Verified";
+        prefix = "已校验";
         percent = props.torrent.recheckProgress;
     } else if (props.torrent.status === Status.downloading && props.torrent.pieceCount === 0) {
-        prefix = "Downloading metadata";
+        prefix = "下载元数据";
         percent = props.torrent.metadataPercentComplete;
     } else if (props.torrent.status === Status.stopped) {
-        prefix = "Stopped";
+        prefix = "已暂停";
     } else {
-        prefix = "Downloaded";
+        prefix = "已下载";
     }
 
     const now = Math.floor(percent * 1000);
@@ -77,10 +77,10 @@ function DetailItem({ name, children }: DetailItemProps) {
             borderBottom: "1px solid",
             borderColor: theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[3],
             padding: "1px 0.4em 0 0.4em",
-            lineHeight: 1.4,
+            lineHeight: 1.4
         }}>
             <Flex>
-                <Box sx={{ flex: "0 0 10em" }}>{name}</Box>
+                <Box sx={{ flex: "0 0 7em" }}><span style={{float: "right", marginRight: "0.4em"}}>{name}</span></Box>
                 {children}
             </Flex>
         </Grid.Col>
@@ -89,7 +89,7 @@ function DetailItem({ name, children }: DetailItemProps) {
 
 function Wasted(props: { torrent: Torrent }) {
     const hashfails = props.torrent.pieceSize > 0 ? props.torrent.corruptEver / props.torrent.pieceSize : 0;
-    return <>{`${bytesToHumanReadableStr(props.torrent.corruptEver)} (${hashfails} hashfails)`}</>;
+    return <>{`${bytesToHumanReadableStr(props.torrent.corruptEver)} (${hashfails} 异常)`}</>;
 }
 
 function DownloadSpeed(props: { torrent: Torrent }) {
@@ -116,7 +116,7 @@ function Seeds(props: { torrent: Torrent }) {
     if (totalSeeds < 0) {
         return <>{sending}</>;
     } else {
-        return <>{`${sending} of ${totalSeeds} connected`}</>;
+        return <>{`${sending} (${totalSeeds})`}</>;
     }
 }
 
@@ -126,7 +126,7 @@ function Peers(props: { torrent: Torrent }) {
     if (totalPeers < 0) {
         return <>{getting}</>;
     } else {
-        return <>{`${getting} of ${totalPeers} connected`}</>;
+        return <>{`${getting} (${totalPeers})`}</>;
     }
 }
 
@@ -146,24 +146,24 @@ function TransferTable(props: { torrent: Torrent }) {
     return (
         <Container fluid>
             <Grid ref={ref} my="sm" sx={{ maxWidth: "100em" }} columns={rect.width > 850 ? 3 : 1}>
-                <DetailItem name="Status:"><StatusField {...props} fieldName="status" /></DetailItem>
-                <DetailItem name="Error:">{props.torrent.cachedError}</DetailItem>
-                <DetailItem name="Remaining:">{`${secondsToHumanReadableStr(props.torrent.eta)} (${bytesToHumanReadableStr(props.torrent.leftUntilDone)})`}</DetailItem>
-                <DetailItem name="Downloaded:">{bytesToHumanReadableStr(props.torrent.downloadedEver)}</DetailItem>
-                <DetailItem name="Uploaded:">{bytesToHumanReadableStr(props.torrent.uploadedEver)}</DetailItem>
-                <DetailItem name="Wasted:"><Wasted {...props} /></DetailItem>
-                <DetailItem name="Download speed:"><DownloadSpeed {...props} /></DetailItem>
-                <DetailItem name="Upload speed:">{`${bytesToHumanReadableStr(props.torrent.rateUpload)}/s`}</DetailItem>
-                <DetailItem name="Share ratio:">{shareRatio}</DetailItem>
-                <DetailItem name="Download limit:"><SpeedLimit {...props} field="download" /></DetailItem>
-                <DetailItem name="Upload limit:"><SpeedLimit {...props} field="upload" /></DetailItem>
-                <DetailItem name="Bandwidth group:">{props.torrent.group}</DetailItem>
-                <DetailItem name="Seeds:"><Seeds {...props} /></DetailItem>
-                <DetailItem name="Peers:"><Peers {...props} /></DetailItem>
-                <DetailItem name="Max peers:">{props.torrent.maxConnectedPeers}</DetailItem>
+                <DetailItem name="状态:"><StatusField {...props} fieldName="status" /></DetailItem>
+                <DetailItem name="错误:">{props.torrent.cachedError}</DetailItem>
+                <DetailItem name="剩余:">{`${secondsToHumanReadableStr(props.torrent.eta)} (${bytesToHumanReadableStr(props.torrent.leftUntilDone)})`}</DetailItem>
+                <DetailItem name="已下载:">{bytesToHumanReadableStr(props.torrent.downloadedEver)}</DetailItem>
+                <DetailItem name="已上传:">{bytesToHumanReadableStr(props.torrent.uploadedEver)}</DetailItem>
+                <DetailItem name="丢弃:"><Wasted {...props} /></DetailItem>
+                <DetailItem name="下载速度:"><DownloadSpeed {...props} /></DetailItem>
+                <DetailItem name="上传速度:">{`${bytesToHumanReadableStr(props.torrent.rateUpload)}/s`}</DetailItem>
+                <DetailItem name="分享率:">{shareRatio}</DetailItem>
+                <DetailItem name="下载限速:"><SpeedLimit {...props} field="download" /></DetailItem>
+                <DetailItem name="上传限速:"><SpeedLimit {...props} field="upload" /></DetailItem>
+                <DetailItem name="备用组:">{props.torrent.group}</DetailItem>
+                <DetailItem name="种子|活跃:"><Seeds {...props} /></DetailItem>
+                <DetailItem name="下载|活跃:"><Peers {...props} /></DetailItem>
+                <DetailItem name="最大链接数:">{props.torrent.maxConnectedPeers}</DetailItem>
                 <DetailItem name="Tracker:"><TrackerField {...props} fieldName="trackerStats" /></DetailItem>
-                <DetailItem name="Tracker update on:"><TrackerUpdate {...props} /></DetailItem>
-                <DetailItem name="Last active:"><DateField {...props} fieldName="activityDate" /></DetailItem>
+                <DetailItem name="下次汇报时间:"><TrackerUpdate {...props} /></DetailItem>
+                <DetailItem name="最后活动时间:"><DateField {...props} fieldName="activityDate" /></DetailItem>
             </Grid>
         </Container>
     );
@@ -173,7 +173,7 @@ function TotalSize(props: { torrent: Torrent }) {
     if (props.torrent.totalSize <= 0) return <>?</>;
     const size = bytesToHumanReadableStr(props.torrent.totalSize);
     const done = bytesToHumanReadableStr(props.torrent.sizeWhenDone - props.torrent.leftUntilDone);
-    return <>{`${size} (${done} done)`}</>;
+    return <>{`${size} (已下载 ${done})`}</>;
 }
 
 function Pieces(props: { torrent: Torrent }) {
@@ -186,7 +186,7 @@ function Pieces(props: { torrent: Torrent }) {
         have = props.torrent.haveValid / (props.torrent.pieceSize > 0 ? props.torrent.pieceSize : 1);
     }
 
-    return <>{`${props.torrent.pieceCount as number} x ${pieceSize} (have ${Math.round(have)})`}</>;
+    return <>{`${props.torrent.pieceCount as number} x ${pieceSize} (已完成 ${Math.round(have)})`}</>;
 }
 
 const httpRe = /https?:\/\//;
@@ -223,10 +223,10 @@ function TorrentDetails(props: { torrent: Torrent }) {
     return (
         <Container fluid>
             <Grid ref={ref} my="sm" sx={{ maxWidth: "100em" }} columns={rect.width > 850 ? 2 : 1}>
-                <DetailItem name="Full path:">
+                <DetailItem name="保存路径:">
                     <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={fullPath} />
                 </DetailItem>
-                <DetailItem name="Created:">
+                <DetailItem name="创建日期:">
                     <div>
                         <span>
                             {props.torrent.dateCreated > 0
@@ -240,18 +240,18 @@ function TorrentDetails(props: { torrent: Torrent }) {
                         </span>
                     </div>
                 </DetailItem>
-                <DetailItem name="Total size:"><TotalSize {...props} /></DetailItem>
-                <DetailItem name="Pieces:"><Pieces {...props} /></DetailItem>
+                <DetailItem name="总大小:"><TotalSize {...props} /></DetailItem>
+                <DetailItem name="块:"><Pieces {...props} /></DetailItem>
                 <DetailItem name="Hash:">
                     <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.hashString} />
                 </DetailItem>
-                <DetailItem name="Comment:"><Urlize text={props.torrent.comment} /></DetailItem>
-                <DetailItem name="Added on:"><DateField {...props} fieldName="addedDate" /></DetailItem>
-                <DetailItem name="Completed on:"><DateField {...props} fieldName="doneDate" /></DetailItem>
-                <DetailItem name="Magnet link:">
+                <DetailItem name="注释:"><Urlize text={props.torrent.comment} /></DetailItem>
+                <DetailItem name="添加时间:"><DateField {...props} fieldName="addedDate" /></DetailItem>
+                <DetailItem name="完成时间:"><DateField {...props} fieldName="doneDate" /></DetailItem>
+                <DetailItem name="磁力链接:">
                     <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.magnetLink} />
                 </DetailItem>
-                <DetailItem name="Labels:"><LabelsField {...props} fieldName="labels" /></DetailItem>
+                <DetailItem name="用户标签:"><LabelsField {...props} fieldName="labels" /></DetailItem>
             </Grid>
         </Container>
     );
@@ -280,9 +280,9 @@ function GeneralPane(props: { torrent: Torrent }) {
             <div style={{ flexGrow: 1 }}>
                 <div className="scrollable">
                     <Container fluid>
-                        <TableNameRow>Transfer</TableNameRow>
+                        <TableNameRow>传输信息</TableNameRow>
                         <TransferTable {...props} />
-                        <TableNameRow>Torrent</TableNameRow>
+                        <TableNameRow>种子信息</TableNameRow>
                         <TorrentDetails {...props} />
                     </Container>
                 </div>
@@ -331,15 +331,15 @@ function Stats(props: { stats: SessionStatEntry }) {
     return <Table mb="sm" sx={{ maxWidth: "25em" }}>
         <tbody>
             <tr>
-                <td style={{ width: "10em" }}>Downloaded</td>
-                <td>{bytesToHumanReadableStr(props.stats.downloadedBytes)}</td>
-            </tr>
-            <tr>
-                <td>Uploaded</td>
+                <td>已上传</td>
                 <td>{bytesToHumanReadableStr(props.stats.uploadedBytes)}</td>
             </tr>
             <tr>
-                <td>Ratio</td>
+                <td style={{ width: "10em" }}>已下载</td>
+                <td>{bytesToHumanReadableStr(props.stats.downloadedBytes)}</td>
+            </tr>
+            <tr>
+                <td>分享率</td>
                 <td>
                     {props.stats.downloadedBytes === 0
                         ? "∞"
@@ -347,15 +347,15 @@ function Stats(props: { stats: SessionStatEntry }) {
                 </td>
             </tr>
             <tr>
-                <td>Files added</td>
+                <td>添加文件</td>
                 <td>{props.stats.filesAdded}</td>
             </tr>
-            <tr>
-                <td>Active</td>
-                <td>{secondsToHumanReadableStr(props.stats.secondsActive)}</td>
-            </tr>
             {props.stats.sessionCount > 1 &&
-                <tr><td>Sesssion count</td><td>{props.stats.sessionCount}</td></tr>}
+            <tr><td>会话次数</td><td>{props.stats.sessionCount}</td></tr>}
+            <tr>
+                <td>活动时间</td>
+                <td>{secondsToHumanReadableStr(props.stats.secondsActive, false)}</td>
+            </tr>
         </tbody>
     </Table>;
 }
@@ -369,10 +369,10 @@ function ServerStats() {
                 <div className="scrollable">
                     {sessionStats !== undefined
                         ? <Container fluid>
-                            <TableNameRow>Session</TableNameRow>
-                            <Stats stats={sessionStats["current-stats"]} />
-                            <TableNameRow>Cumulative</TableNameRow>
+                            <TableNameRow>累计</TableNameRow>
                             <Stats stats={sessionStats["cumulative-stats"]} />
+                            <TableNameRow>当前会话</TableNameRow>
+                            <Stats stats={sessionStats["current-stats"]} />
                         </Container>
                         : <></>
                     }
@@ -455,28 +455,28 @@ function Details(props: DetailsProps) {
                     <Tabs.Tab value="General" disabled={torrent === undefined} style={{ order: tabsMap.General }}>
                         <Group>
                             <Icon.InfoCircle size="1.1rem" />
-                            General
+                            常规
                         </Group>
                     </Tabs.Tab>}
                 {tabs[tabsMap.Files].visible &&
                     <Tabs.Tab value="Files" disabled={torrent === undefined} style={{ order: tabsMap.Files }}>
                         <Group>
                             <Icon.Files size="1.1rem" />
-                            {`Files${torrent !== undefined ? ` (${torrent.files.length as number})` : ""}`}
+                            {`文件${torrent !== undefined ? ` (${torrent.files.length as number})` : ""}`}
                         </Group>
                     </Tabs.Tab>}
                 {tabs[tabsMap.Pieces].visible &&
                     <Tabs.Tab value="Pieces" disabled={torrent === undefined} style={{ order: tabsMap.Pieces }}>
                         <Group>
                             <Icon.Grid3x2 size="1.1rem" />
-                            {`Pieces${torrent !== undefined ? ` (${torrent.pieceCount as number})` : ""}`}
+                            {`块${torrent !== undefined ? ` (${torrent.pieceCount as number})` : ""}`}
                         </Group>
                     </Tabs.Tab>}
                 {tabs[tabsMap.Peers].visible &&
                     <Tabs.Tab value="Peers" disabled={torrent === undefined} style={{ order: tabsMap.Peers }}>
                         <Group>
                             <Icon.People size="1.1rem" />
-                            Peers
+                            用户
                         </Group>
                     </Tabs.Tab>}
                 {tabs[tabsMap.Trackers].visible &&
@@ -492,7 +492,7 @@ function Details(props: DetailsProps) {
                     <Tabs.Tab value="Server statistics" style={{ order: tabsMap["Server statistics"] }}>
                         <Group>
                             <Icon.ArrowDownUp size="1.1rem" />
-                            Server statistics
+                            数据统计
                         </Group>
                     </Tabs.Tab>}
             </Tabs.List>

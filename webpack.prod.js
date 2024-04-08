@@ -29,7 +29,7 @@ export default merge(common("production"), {
             reportFilename: path.resolve(__dirname, "webpack-report.html"),
         }),
     ],
-    devtool: "source-map",
+    //devtool: "source-map",
     resolve: {
         alias: {
             // Uncomment for profiling build

@@ -69,11 +69,11 @@ const Sashes = ["vertical", "horizontal"] as const;
 type SashName = typeof Sashes[number];
 export type SplitType = SashName;
 
-const FilterSections = ["Status", "Directories", "Labels", "Trackers"] as const;
+const FilterSections = ["种子状态", "数据目录", "用户标签", "服务器分布"] as const;
 export type FilterSectionName = typeof FilterSections[number];
 
 const StatusFilters = [
-    "All Torrents", "Downloading", "Completed", "Active", "Inactive", "Running", "Stopped", "Error", "Waiting", "Magnetizing",
+    "全部", "下载中", "已暂停", "正在做种", "正在校验", "活动中", "未活动", "工作中", "错误", "磁力链接",
 ] as const;
 export type StatusFilterName = typeof StatusFilters[number];
 type StatusFiltersVisibility = Record<StatusFilterName, boolean>;
@@ -195,23 +195,6 @@ const DefaultColumnVisibility: Partial<Record<TableName, VisibilityState>> = {
 
 // Based on a list from https://github.com/ngosang/trackerslist
 const DefaultTrackerList = [
-    "udp://tracker.opentrackr.org:1337/announce",
-    "udp://tracker.openbittorrent.com:6969/announce",
-    "http://tracker.openbittorrent.com:80/announce",
-    "udp://tracker.torrent.eu.org:451/announce",
-    "udp://open.demonii.com:1337/announce",
-    "http://bt.endpot.com:80/announce",
-    "udp://opentracker.i2p.rocks:6969/announce",
-    "udp://open.stealth.si:80/announce",
-    "udp://exodus.desync.com:6969/announce",
-    "udp://tracker.moeking.me:6969/announce",
-    "udp://tracker.bitsearch.to:1337/announce",
-    "udp://explodie.org:6969/announce",
-    "udp://uploads.gamecoast.net:6969/announce",
-    "udp://tracker.theoks.net:6969/announce",
-    "udp://tracker.leech.ie:1337/announce",
-    "https://tracker2.ctix.cn:443/announce",
-    "https://tracker1.520.jp:443/announce",
 ] as const;
 
 const DefaultSettings: Settings = {
@@ -251,7 +234,7 @@ const DefaultSettings: Settings = {
         statusFiltersVisibility: Object.fromEntries(
             StatusFilters.map((filterName) => [
                 filterName,
-                !["Running", "Magnetizing"].includes(filterName),
+                !["工作中", "磁力链接"].includes(filterName),
             ]),
         ) as Record<StatusFilterName, boolean>,
         compactDirectories: false,
@@ -311,6 +294,16 @@ export class Config {
 
         this.values.servers = this.values.servers.map(
             (s) => ({ ...s, connection: { ...s.connection, password: deobfuscate(s.connection.password) } }));
+
+        for (const section of FilterSections) {
+            if (!this.values.interface.filterSections.find(s => s.section == section)) {
+                this.values.interface.filterSections.push({
+                    section,
+                    visible: true,
+                })
+            }
+        }
+        this.values.interface.filterSections = this.values.interface.filterSections.filter(s => FilterSections.indexOf(s.section) >= 0);
 
         return this;
     }

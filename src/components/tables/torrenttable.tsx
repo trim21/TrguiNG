@@ -80,19 +80,19 @@ const TimeField = memo(function TimeField(props: TableFieldProps) {
 const AllFields: readonly TableField[] = [
     {
         name: "name",
-        label: "Name",
+        label: "名称",
         component: NameField,
         requiredFields: ["name", "error", "trackerStats", "leftUntilDone"] as TorrentFieldsType[],
     },
-    { name: "totalSize", label: "Size", component: ByteSizeField },
-    { name: "sizeWhenDone", label: "Size to download", component: ByteSizeField },
-    { name: "leftUntilDone", label: "Size left", component: ByteSizeField },
-    { name: "haveValid", label: "Have", component: ByteSizeField },
-    { name: "downloadedEver", label: "Downloaded", component: ByteSizeField },
-    { name: "uploadedEver", label: "Uploaded", component: ByteSizeField },
+    { name: "totalSize", label: "总大小", component: ByteSizeField },
+    { name: "sizeWhenDone", label: "已下载", component: ByteSizeField },
+    { name: "leftUntilDone", label: "剩余", component: ByteSizeField },
+    { name: "haveValid", label: "有效", component: ByteSizeField },
+    { name: "downloadedEver", label: "实际下载", component: ByteSizeField },
+    { name: "uploadedEver", label: "已上传", component: ByteSizeField },
     {
         name: "uploadedEver",
-        label: "U/D",
+        label: "上传/实际下载",
         component: UploadRatioField,
         accessorFn: (t) => t.uploadedEver === 0 ? 0 : t.uploadedEver / t.downloadedEver,
         columnId: "simpleRatio",
@@ -100,57 +100,57 @@ const AllFields: readonly TableField[] = [
     },
     {
         name: "percentDone",
-        label: "Done",
+        label: "进度",
         component: PercentBarField,
         requiredFields: ["percentDone", "rateDownload", "rateUpload"] as TorrentFieldsType[],
     },
-    { name: "rateDownload", label: "Down speed", component: ByteRateField },
-    { name: "rateUpload", label: "Up speed", component: ByteRateField },
-    { name: "status", label: "Status", component: StatusField },
-    { name: "addedDate", label: "Added on", component: DateField },
+    { name: "rateDownload", label: "下载速度", component: ByteRateField },
+    { name: "rateUpload", label: "上传速度", component: ByteRateField },
+    { name: "status", label: "状态", component: StatusField },
+    { name: "addedDate", label: "添加时间", component: DateField },
     {
         name: "peersSendingToUs",
-        label: "Seeds",
+        label: "种子|活跃",
         component: SeedsField,
         columnId: "peersSendingToUs",
         accessorFn: (t) => t.peersSendingToUs * 1e+6 + t.cachedSeedsTotal,
     },
     {
         name: "peersGettingFromUs",
-        label: "Peers",
+        label: "下载|活跃",
         component: PeersField,
         columnId: "peersGettingFromUs",
         accessorFn: (t) => t.peersGettingFromUs * 1e+6 + t.cachedPeersTotal,
     },
     { name: "eta", label: "ETA", component: EtaField },
-    { name: "uploadRatio", label: "Ratio", component: PositiveNumberField },
+    { name: "uploadRatio", label: "分享率", component: PositiveNumberField },
     {
         name: "trackerStats",
-        label: "Tracker",
+        label: "服务器",
         component: TrackerField,
         columnId: "tracker",
         accessorFn: (t) => t.cachedMainTracker,
     },
     {
         name: "trackerStats",
-        label: "Tracker status",
+        label: "服务器状态",
         component: TrackerStatusField,
         columnId: "trackerStatus",
         accessorFn: (t) => t.cachedTrackerStatus,
     },
-    { name: "doneDate", label: "Completed on", component: DateField },
-    { name: "activityDate", label: "Last active", component: DateDiffField },
-    { name: "downloadDir", label: "Path", component: StringField },
-    { name: "bandwidthPriority", label: "Priority", component: PriorityField },
+    { name: "doneDate", label: "完成时间", component: DateField },
+    { name: "activityDate", label: "最后活动时间", component: DateDiffField },
+    { name: "downloadDir", label: "保存目录", component: StringField },
+    { name: "bandwidthPriority", label: "优先级", component: PriorityField },
     { name: "id", label: "ID", component: StringField },
-    { name: "queuePosition", label: "Queue position", component: StringField },
-    { name: "secondsSeeding", label: "Seeding time", component: TimeField },
-    { name: "isPrivate", label: "Private", component: StringField },
-    { name: "labels", label: "Labels", component: LabelsField },
-    { name: "group", label: "Bandwidth group", component: StringField },
-    { name: "file-count", label: "File count", component: PositiveNumberField },
-    { name: "pieceCount", label: "Piece count", component: PositiveNumberField },
-    { name: "metadataPercentComplete", label: "Metadata", component: PercentBarField },
+    { name: "queuePosition", label: "队列位置", component: StringField },
+    { name: "secondsSeeding", label: "做种时长", component: TimeField },
+    { name: "isPrivate", label: "私有", component: StringField },
+    { name: "labels", label: "用户标签", component: LabelsField },
+    { name: "group", label: "备用组", component: StringField },
+    { name: "file-count", label: "文件数目", component: PositiveNumberField },
+    { name: "pieceCount", label: "块数目", component: PositiveNumberField },
+    { name: "metadataPercentComplete", label: "元数据", component: PercentBarField },
 ] as const;
 
 function NameField(props: TableFieldProps) {
@@ -234,7 +234,7 @@ function SeedsField(props: TableFieldProps) {
     const totalSeeds = props.torrent.cachedSeedsTotal;
     return (
         <div style={{ width: "100%", textAlign: "right" }}>
-            {totalSeeds < 0 ? `${sending}` : `${sending} / ${totalSeeds}`}
+            {totalSeeds < 0 ? `${sending}` : `${totalSeeds} (${sending})`}
         </div>
     );
 }
@@ -244,7 +244,7 @@ function PeersField(props: TableFieldProps) {
     const totalPeers = props.torrent.cachedPeersTotal;
     return (
         <div style={{ width: "100%", textAlign: "right" }}>
-            {totalPeers < 0 ? `${getting}` : `${getting} / ${totalPeers}`}
+            {totalPeers < 0 ? `${getting}` : `${totalPeers} (${getting})`}
         </div>
     );
 }
@@ -428,7 +428,7 @@ export function TorrentTable(props: {
             path = pathMapFromServer(path, serverConfig);
             invoke("shell_open", { path, reveal }).catch((e) => {
                 notifications.show({
-                    title: "Error opening path",
+                    title: "打开失败",
                     message: path,
                     color: "red",
                 });
@@ -527,7 +527,7 @@ function TorrentContextMenu(props: {
         copyToClipboard(links.join("\n"));
 
         notifications.show({
-            message: `Magnet ${serverSelected.size > 1 ? "links" : "link"} copied to clipboard`,
+            message: `磁力链接已复制到剪切板`,
             color: "green",
         });
     }, [serverData.torrents, serverSelected]);
@@ -581,22 +581,22 @@ function TorrentContextMenu(props: {
                     <Menu.Item
                         onClick={() => { torrentAction("queue-move-top", "Torrents queue updated"); }}
                         icon={<Icon.ChevronDoubleUp size="1.1rem" />}>
-                        Move to top
+                        队列排到最前
                     </Menu.Item>
                     <Menu.Item
                         onClick={() => { torrentAction("queue-move-up", "Torrents queue updated"); }}
                         icon={<Icon.ChevronUp size="1.1rem" />}>
-                        Move up
+                        队列向上移动
                     </Menu.Item>
                     <Menu.Item
                         onClick={() => { torrentAction("queue-move-down", "Torrents queue updated"); }}
                         icon={<Icon.ChevronDown size="1.1rem" />}>
-                        Move down
+                        队列向下移动
                     </Menu.Item>
                     <Menu.Item
                         onClick={() => { torrentAction("queue-move-bottom", "Torrents queue updated"); }}
                         icon={<Icon.ChevronDoubleDown size="1.1rem" />}>
-                        Move to bottom
+                        队列排到最后
                     </Menu.Item>
                 </Menu.Dropdown>
             </Portal>
@@ -609,68 +609,63 @@ function TorrentContextMenu(props: {
                         onMouseEnter={closeQueueSubmenu}
                         icon={<Icon.BoxArrowUpRight size="1.1rem" />}
                         disabled={serverData.current === undefined}>
-                        <Text weight="bold">Open</Text>
+                        <Text weight="bold">打开文件</Text>
                     </Menu.Item>
                     <Menu.Item
                         onClick={() => { onOpen(true); }}
                         onMouseEnter={closeQueueSubmenu}
                         icon={<Icon.Folder2Open size="1.1rem" />}
                         disabled={serverData.current === undefined}>
-                        <Text>Open folder</Text>
+                        <Text>打开目录</Text>
                     </Menu.Item>
                     <Menu.Divider />
                 </>}
                 <Menu.Item
-                    onClick={() => { torrentAction("torrent-start-now", "Torrents started"); }}
+                    onClick={() => { torrentAction("torrent-start-now", "强制开始"); }}
                     onMouseEnter={closeQueueSubmenu}
                     icon={<Icon.LightningFill size="1.1rem" />}
                     disabled={serverSelected.size === 0}>
-                    Force start
+                    强制开始选中的种子
                 </Menu.Item>
                 <Menu.Item
-                    onClick={() => { torrentAction("torrent-start", "Torrents started"); }}
+                    onClick={() => { torrentAction("torrent-start", "开始"); }}
                     onMouseEnter={closeQueueSubmenu}
                     icon={<Icon.PlayCircleFill size="1.1rem" />}
                     rightSection={<Kbd>F3</Kbd>}
                     disabled={serverSelected.size === 0}>
-                    Start
+                    开始选中的种子
                 </Menu.Item>
                 <Menu.Item
-                    onClick={() => { torrentAction("torrent-stop", "Torrents stopped"); }}
+                    onClick={() => { torrentAction("torrent-stop", "暂停"); }}
                     onMouseEnter={closeQueueSubmenu}
                     icon={<Icon.PauseCircleFill size="1.1rem" />}
                     rightSection={<Kbd>F4</Kbd>}
                     disabled={serverSelected.size === 0}>
-                    Pause
+                    暂停选中的种子
+                </Menu.Item>
+                <Menu.Divider />
+                <Menu.Item
+                    onClick={() => props.modals.current?.remove()}
+                    onMouseEnter={closeQueueSubmenu}
+                    icon={<Icon.XCircleFill size="1.1rem" color={theme.colors.red[6]} />}
+                    disabled={serverSelected.size === 0}
+                    rightSection={<Kbd>del</Kbd>}>
+                    删除选中的任务
                 </Menu.Item>
                 <Menu.Item
-                    onClick={() => { torrentAction("torrent-verify", "Torrents verification started"); }}
+                    onClick={() => { torrentAction("torrent-verify", "开始校验"); }}
                     onMouseEnter={closeQueueSubmenu}
                     icon={<Icon.CheckAll size="1.1rem" />}
                     disabled={serverSelected.size === 0}>
-                    Verify
+                    重新校验选中的种子
                 </Menu.Item>
+                <Menu.Divider />
                 <Menu.Item
-                    onClick={() => { torrentAction("torrent-reannounce", "Torrents are reannounced"); }}
+                    onClick={() => { torrentAction("torrent-reannounce", "重新汇报"); }}
                     onMouseEnter={closeQueueSubmenu}
                     icon={<Icon.Wifi size="1.1rem" />}
                     disabled={serverSelected.size === 0}>
-                    Reannounce
-                </Menu.Item>
-                <Menu.Item
-                    onClick={copyMagnetLinks}
-                    onMouseEnter={closeQueueSubmenu}
-                    icon={<Icon.MagnetFill size="1.1rem" />}
-                    disabled={serverSelected.size === 0}
-                    rightSection={<Kbd>{`${modKeyString()} C`}</Kbd>}>
-                    Copy magnet {serverSelected.size > 1 ? "links" : "link"}
-                </Menu.Item>
-                <Menu.Item ref={queueRef}
-                    icon={<Icon.ThreeDots size="1.1rem" />}
-                    rightSection={<Icon.ChevronRight size="0.8rem" />}
-                    onMouseEnter={openQueueSubmenu}
-                    disabled={serverSelected.size === 0}>
-                    Queue
+                    重新汇报(获取更多Peer)
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => props.modals.current?.move()}
@@ -678,7 +673,23 @@ function TorrentContextMenu(props: {
                     icon={<Icon.FolderFill size="1.1rem" />}
                     disabled={serverSelected.size === 0}
                     rightSection={<Kbd>F6</Kbd>}>
-                    Move...
+                    变更数据保存目录
+                </Menu.Item>
+                <Menu.Divider />
+                <Menu.Item ref={queueRef}
+                    icon={<Icon.ThreeDots size="1.1rem" />}
+                    rightSection={<Icon.ChevronRight size="0.8rem" />}
+                    onMouseEnter={openQueueSubmenu}
+                    disabled={serverSelected.size === 0}>
+                    队列
+                </Menu.Item>
+                <Menu.Item
+                    onClick={copyMagnetLinks}
+                    onMouseEnter={closeQueueSubmenu}
+                    icon={<Icon.MagnetFill size="1.1rem" />}
+                    disabled={serverSelected.size === 0}
+                    rightSection={<Kbd>{`${modKeyString()} C`}</Kbd>}>
+                    复制磁力链接
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => props.modals.current?.setLabels()}
@@ -686,15 +697,7 @@ function TorrentContextMenu(props: {
                     icon={<Icon.TagsFill size="1.1rem" />}
                     disabled={serverSelected.size === 0}
                     rightSection={<Kbd>F7</Kbd>}>
-                    Set labels...
-                </Menu.Item>
-                <Menu.Item
-                    onClick={() => props.modals.current?.remove()}
-                    onMouseEnter={closeQueueSubmenu}
-                    icon={<Icon.XCircleFill size="1.1rem" color={theme.colors.red[6]} />}
-                    disabled={serverSelected.size === 0}
-                    rightSection={<Kbd>del</Kbd>}>
-                    Remove...
+                    设置用户标签
                 </Menu.Item>
                 <Menu.Divider />
                 <Menu.Item
@@ -702,14 +705,14 @@ function TorrentContextMenu(props: {
                     icon={<Icon.Wifi size="1.1rem" />}
                     onMouseEnter={closeQueueSubmenu}
                     disabled={serverSelected.size === 0 || (serverSelected.size > 1 && rpcVersion < 17)}>
-                    Trackers...
+                    修改Tracker...
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => props.modals.current?.editTorrent()}
                     icon={<Icon.GearFill size="1.1rem" />}
                     onMouseEnter={closeQueueSubmenu}
                     disabled={serverSelected.size === 0}>
-                    Properties...
+                    修改限速等限制属性...
                 </Menu.Item>
             </Box>
         </ContextMenu>

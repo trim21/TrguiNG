@@ -212,12 +212,12 @@ function Toolbar(props: ToolbarProps) {
         <Flex w="100%" align="stretch">
             <Button.Group mx="sm">
                 <ToolbarButton
-                    title="Add torrent file"
+                    title="添加种子文件"
                     onClick={() => { props.modals.current?.addTorrent(); }}>
                     <Icon.FileArrowDownFill size="1.5rem" color={theme.colors.green[8]} />
                 </ToolbarButton>
                 <ToolbarButton
-                    title="Add magnet link"
+                    title="添加种子链接"
                     onClick={() => { props.modals.current?.addMagnet(); }}>
                     <Icon.MagnetFill size="1.5rem" color={theme.colors.green[8]} />
                 </ToolbarButton>
@@ -225,17 +225,17 @@ function Toolbar(props: ToolbarProps) {
 
             <Button.Group mx="sm">
                 <ToolbarButton
-                    title="Start torrent (F3)"
+                    title="开始 (F3)"
                     onClick={handlers.start} >
                     <Icon.PlayCircleFill size="1.5rem" color={theme.colors.blue[6]} />
                 </ToolbarButton>
                 <ToolbarButton
-                    title="Pause torrent (F4)"
+                    title="暂停 (F4)"
                     onClick={handlers.pause} >
                     <Icon.PauseCircleFill size="1.5rem" color={theme.colors.blue[6]} />
                 </ToolbarButton>
                 <ToolbarButton
-                    title="Remove torrent (del)"
+                    title="删除 (del)"
                     onClick={handlers.remove}>
                     <Icon.XCircleFill size="1.5rem" color={theme.colors.red[6]} />
                 </ToolbarButton>
@@ -243,12 +243,12 @@ function Toolbar(props: ToolbarProps) {
 
             <Button.Group mx="sm">
                 <ToolbarButton
-                    title="Move up in queue"
+                    title="队列上移"
                     onClick={handlers.queueUp} >
                     <Icon.ArrowUpCircleFill size="1.5rem" color={theme.colors.green[8]} />
                 </ToolbarButton>
                 <ToolbarButton
-                    title="Move down in queue"
+                    title="队列下移"
                     onClick={handlers.queueDown} >
                     <Icon.ArrowDownCircleFill size="1.5rem" color={theme.colors.green[8]} />
                 </ToolbarButton>
@@ -256,19 +256,19 @@ function Toolbar(props: ToolbarProps) {
 
             <Button.Group mx="sm">
                 <ToolbarButton
-                    title="Move torrent (F6)"
+                    title="修改目录 (F6)"
                     onClick={handlers.move}>
                     <Icon.FolderFill size="1.5rem" color={theme.colors.yellow[4]} stroke={theme.colors.yellow[5]} />
                 </ToolbarButton>
                 <ToolbarButton
-                    title="Set labels (F7)"
+                    title="设置用户标签 (F7)"
                     onClick={handlers.setLabels} >
                     <Icon.TagsFill size="1.5rem" color={theme.colors.blue[6]} />
                 </ToolbarButton>
 
                 <Menu shadow="md" width="10rem" withinPortal middlewares={{ shift: true, flip: false }}>
                     <Menu.Target>
-                        <ToolbarButton title="Set priority">
+                        <ToolbarButton title="调整优先级">
                             <PriorityIcon width="1.5rem" height="1.5rem"
                                 fill={theme.colors.yellow[theme.colorScheme === "dark" ? 4 : 6]} />
                         </ToolbarButton>
@@ -277,22 +277,22 @@ function Toolbar(props: ToolbarProps) {
                     <Menu.Dropdown>
                         <Menu.Item icon={<Icon.CircleFill color={theme.colors.orange[7]} />}
                             onClick={handlers.setPriorityHigh} rightSection={<Kbd>{`${modKeyString()} H`}</Kbd>}>
-                            High
+                            高
                         </Menu.Item>
                         <Menu.Item icon={<Icon.CircleFill color={theme.colors.teal[9]} />}
                             onClick={handlers.setPriorityNormal} rightSection={<Kbd>{`${modKeyString()} N`}</Kbd>}>
-                            Normal
+                            正常
                         </Menu.Item>
                         <Menu.Item icon={<Icon.CircleFill color={theme.colors.yellow[6]} />}
                             onClick={handlers.setPriorityLow} rightSection={<Kbd>{`${modKeyString()} L`}</Kbd>}>
-                            Low
+                            低
                         </Menu.Item>
                     </Menu.Dropdown>
                 </Menu>
             </Button.Group>
 
             <ToolbarButton
-                title={`Turn alternative bandwidth mode ${altSpeedMode === true ? "off" : "on"} (F8)`}
+                title={`开启备用带宽限速 ${altSpeedMode === true ? "off" : "on"} (F8)`}
                 onClick={handlers.toggleAltSpeedMode}
                 depressed={altSpeedMode}
             >
@@ -319,15 +319,15 @@ function Toolbar(props: ToolbarProps) {
                 <Menu.Dropdown>
                     <Menu.Item
                         onClick={props.toggleMainSplit} rightSection={<Kbd>{`${modKeyString()} P`}</Kbd>}>
-                        Change layout
+                        切换布局
                     </Menu.Item>
                     <Menu.Item
                         onClick={props.toggleFiltersPanel} rightSection={<Kbd>{`${modKeyString()} O`}</Kbd>}>
-                        Toggle filters
+                        隐藏/展示过滤
                     </Menu.Item>
                     <Menu.Item
                         onClick={props.toggleDetailsPanel} rightSection={<Kbd>{`${modKeyString()} I`}</Kbd>}>
-                        Toggle details
+                        隐藏/展示详情
                     </Menu.Item>
                 </Menu.Dropdown>
             </Menu>

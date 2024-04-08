@@ -120,7 +120,7 @@ export function EditTrackers(props: ModalState) {
             onClose={props.close}
             onSave={onSave}
             centered
-            title="Edit torrent trackers"
+            title="修改种子Trackers"
             mih="25rem"
         >
             <LoadingOverlay visible={isLoading} />
@@ -129,10 +129,10 @@ export function EditTrackers(props: ModalState) {
                     <TorrentsNames />
                 </Grid.Col>
                 <Grid.Col span={8}>
-                    <Text>Tracker list, one per line, empty line between tiers</Text>
+                    <Text>Tracker列表，一行一个</Text>
                 </Grid.Col>
                 <Grid.Col span={4}>
-                    <Button onClick={addDefaultTrackers}>Add default list</Button>
+                    <Button onClick={addDefaultTrackers}>添加到默认Trackers</Button>
                 </Grid.Col>
                 <Grid.Col>
                     <Textarea minRows={10}

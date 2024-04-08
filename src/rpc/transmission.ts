@@ -32,13 +32,13 @@ export const Status = {
 } as const;
 
 export const StatusStrings = [
-    "Stopped",
-    "Waiting",
-    "Verifying",
-    "Waiting",
-    "Downloading",
-    "Waiting",
-    "Seeding",
+    "已暂停",
+    "等待校验",
+    "校验中",
+    "等待下载",
+    "下载中",
+    "等待做种",
+    "做种中",
 ] as const;
 
 const PriorityNumbers = [-1, 0, 1] as const;
@@ -52,9 +52,9 @@ export const BandwidthPriority = {
 } as const;
 
 export const PriorityStrings = new Map<PriorityNumberType, string>([
-    [-1, "Low"],
-    [0, "Normal"],
-    [1, "High"],
+    [-1, "低"],
+    [0, "正常"],
+    [1, "高"],
 ]);
 
 export const PriorityColors = new Map<PriorityNumberType, ExtendedCustomColors>([

@@ -49,12 +49,12 @@ function AddCommon(props: AddCommonProps) {
     const rpcVersion = useServerRpcVersion();
 
     return <>
-        <TorrentLocation {...props.location} inputLabel="Download directory" disabled={props.disabled} />
+        <TorrentLocation {...props.location} inputLabel="保存目录" disabled={props.disabled} />
         {rpcVersion >= 17 &&
-            <TorrentLabels labels={props.labels} setLabels={props.setLabels} inputLabel="Labels" disabled={props.disabled} />}
+            <TorrentLabels labels={props.labels} setLabels={props.setLabels} inputLabel="用户标签" disabled={props.disabled} />}
         <Group>
             <Checkbox
-                label="Start torrent"
+                label="自动开始"
                 checked={props.start}
                 disabled={props.disabled}
                 onChange={(e) => { props.setStart(e.currentTarget.checked); }}
@@ -173,7 +173,7 @@ export function AddMagnet(props: AddCommonModalProps) {
             const duplicate = response.arguments["torrent-duplicate"];
             if (duplicate !== undefined) {
                 notifications.show({
-                    title: "Torrent already exists",
+                    title: "种子已经存在",
                     message: duplicate.name,
                     color: "green",
                 });
@@ -181,16 +181,16 @@ export function AddMagnet(props: AddCommonModalProps) {
             const added = response.arguments["torrent-added"];
             if (added !== undefined) {
                 notifications.show({
-                    title: "Torrent added",
+                    title: "种子已添加",
                     message: added.name,
                     color: "green",
                 });
             }
         }, []),
         useCallback((e) => {
-            console.error("Failed to add torrent:", e);
+            console.error("种子添加失败:", e);
             notifications.show({
-                title: "Error adding torrent",
+                title: "种子添加失败",
                 message: String(e),
                 color: "red",
             });
@@ -218,7 +218,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                 {
                     onSuccess: () => {
                         notifications.show({
-                            message: "Trackers updated",
+                            message: "服务器 Trackers 更新",
                             color: "green",
                         });
                     },
@@ -241,23 +241,23 @@ export function AddMagnet(props: AddCommonModalProps) {
         <HkModal opened={true} onClose={close} centered size="lg"
             styles={{ title: { flexGrow: 1 } }}
             title={<Flex w="100%" align="center" justify="space-between">
-                <span>Add torrent by magnet link or URL</span>
+                <span>添加种子磁力链接或者URL</span>
                 {TAURI && <TabSwitchDropdown tabsRef={props.tabsRef} />}
             </Flex>} >
             <Divider my="sm" />
             <TextInput
-                label="Link" w="100%"
+                label="磁力链接或者URL" w="100%"
                 value={magnet}
                 onChange={(e) => { setMagnet(e.currentTarget.value); }}
                 error={existingTorrent === undefined
                     ? undefined
-                    : "Torrent already exists"} />
+                    : "种子已存在"} />
             <AddCommon {...common.props} disabled={existingTorrent !== undefined} />
             <Divider my="sm" />
             <Group position="center" spacing="md">
                 <Button onClick={onAdd} variant="filled"
                     disabled={existingTorrent !== undefined && (magnetData?.trackers.length ?? 0) === 0}>
-                    {existingTorrent === undefined ? "Add" : "Add trackers"}
+                    {existingTorrent === undefined ? "添加" : "添加 Trackers"}
                 </Button>
                 <Button onClick={props.close} variant="light">Cancel</Button>
             </Group>
@@ -271,7 +271,7 @@ async function readLocalTorrent(file: File): Promise<string> {
         reader.onloadend = () => {
             const b64 = (reader.result as string).match(/data:[^/]*\/[^;]*;base64,(.*)/)?.[1];
             if (b64 === undefined) {
-                throw Error("Error reading file");
+                throw Error("读取文件错误");
             }
             resolve(b64);
         };
@@ -305,9 +305,9 @@ function useTauriReadFile(
             const pathPromise = typeof uri === "string"
                 ? Promise.resolve(uri)
                 : dialogOpen({
-                    title: "Select torrent file",
+                    title: "选择种子文件",
                     filters: [{
-                        name: "Torrent",
+                        name: "Torrent(种子文件)",
                         extensions: ["torrent"],
                     }],
                     multiple: true,
@@ -321,7 +321,7 @@ function useTauriReadFile(
                     }
                 }).catch((e) => {
                     notifications.show({
-                        title: "Error reading torrent",
+                        title: "读取种子失败",
                         message: String(e),
                         color: "red",
                     });
@@ -359,7 +359,7 @@ function useWebappReadFile(
                     }]);
                 }).catch(() => {
                     notifications.show({
-                        title: "Error reading file",
+                        title: "读取文件失败",
                         message: file.name,
                         color: "red",
                     });
@@ -395,7 +395,7 @@ function useFilesInput(
                     })));
                 }).catch((e) => {
                     notifications.show({
-                        title: "Error reading file",
+                        title: "读取文件失败",
                         message: e,
                         color: "red",
                     });
@@ -481,7 +481,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             const duplicate = response.arguments["torrent-duplicate"];
             if (duplicate !== undefined) {
                 notifications.show({
-                    title: "Torrent already exists",
+                    title: "种子已存在",
                     message: duplicate.name,
                     color: "green",
                 });
@@ -489,7 +489,7 @@ export function AddTorrent(props: AddCommonModalProps) {
             const added = response.arguments["torrent-added"];
             if (added !== undefined) {
                 notifications.show({
-                    title: "Torrent added",
+                    title: "种子已添加",
                     message: added.name,
                     color: "green",
                 });
@@ -499,9 +499,9 @@ export function AddTorrent(props: AddCommonModalProps) {
             }
         }, [config.values.app.deleteAdded]),
         useCallback((e) => {
-            console.error("Failed to add torrent:", e);
+            console.error("种子添加失败:", e);
             notifications.show({
-                title: "Error adding torrent",
+                title: "种子添加失败",
                 message: String(e),
                 color: "red",
             });
@@ -534,7 +534,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 {
                     onSuccess: () => {
                         notifications.show({
-                            message: "Trackers updated",
+                            message: "服务器 Trackers 更新",
                             color: "green",
                         });
                     },
@@ -616,7 +616,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 <Group position="center" spacing="md">
                     <Button onClick={onAdd} variant="filled" data-autofocus
                         disabled={torrentExists && torrentData[0].trackers.length === 0}>
-                        {!torrentExists ? "Add" : "Add trackers"}
+                        {!torrentExists ? "添加" : "添加 Trackers"}
                     </Button>
                     <Button onClick={modalClose} variant="light">Cancel</Button>
                 </Group>

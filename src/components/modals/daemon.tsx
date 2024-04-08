@@ -43,8 +43,8 @@ interface FormValues extends InterfaceFormValues {
 function PollingPanel({ form }: { form: UseFormReturnType<FormValues> }) {
     return (
         <Grid align="center">
-            <Grid.Col span={12}><Text>Update intervals (sec)</Text></Grid.Col>
-            <Grid.Col span={8}>Session</Grid.Col>
+            <Grid.Col span={12}><Text>更新间隔设置 (秒)</Text></Grid.Col>
+            <Grid.Col span={8}>会话更新</Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={1}
@@ -53,7 +53,7 @@ function PollingPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                 />
             </Grid.Col>
             <Grid.Col span={2} />
-            <Grid.Col span={8}>Torrent details</Grid.Col>
+            <Grid.Col span={8}>种子详情</Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={1}
@@ -62,7 +62,7 @@ function PollingPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                 />
             </Grid.Col>
             <Grid.Col span={2} />
-            <Grid.Col span={8}>Torrents active</Grid.Col>
+            <Grid.Col span={8}>活动种子</Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={1}
@@ -71,7 +71,7 @@ function PollingPanel({ form }: { form: UseFormReturnType<FormValues> }) {
                 />
             </Grid.Col>
             <Grid.Col span={2} />
-            <Grid.Col span={8}>Torrents inactive/minimized</Grid.Col>
+            <Grid.Col span={8}>未活动种子</Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={1}
@@ -89,28 +89,28 @@ function DownloadPanel({ form, session }: { form: UseFormReturnType<FormValues>,
         <Grid align="center">
             <Grid.Col>
                 <TextInput
-                    label="Default download folder (server setting)"
+                    label="默认保存目录"
                     {...form.getInputProps("session.download-dir")} />
             </Grid.Col>
             <Grid.Col>
                 <Checkbox
-                    label="Add .part extension to incomplete files"
+                    label="在未完成的文件名后加上“.part”后缀"
                     {...form.getInputProps("session.rename-partial-files", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col>
                 <Checkbox
-                    label="Use separate directory for incomplete files"
+                    label="启用临时目录"
                     {...form.getInputProps("session.incomplete-dir-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col>
                 <TextInput
-                    label="Path for incomplete files"
+                    label="临时目录"
                     {...form.getInputProps("session.incomplete-dir")}
                     disabled={session["incomplete-dir-enabled"] !== true} />
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
-                    label="Use default seed ratio limit"
+                    label="默认分享率上限"
                     {...form.getInputProps("session.seedRatioLimited", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={2}>
@@ -125,7 +125,7 @@ function DownloadPanel({ form, session }: { form: UseFormReturnType<FormValues>,
             <Grid.Col span={4}></Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
-                    label="Stop idle torrents after"
+                    label="默认停止无流量种子持续时间"
                     {...form.getInputProps("session.idle-seeding-limit-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={2}>
@@ -135,8 +135,8 @@ function DownloadPanel({ form, session }: { form: UseFormReturnType<FormValues>,
                     disabled={session["idle-seeding-limit-enabled"] !== true}
                 />
             </Grid.Col>
-            <Grid.Col span={4}>minutes</Grid.Col>
-            <Grid.Col span={6}>Disk cache size</Grid.Col>
+            <Grid.Col span={4}>分钟</Grid.Col>
+            <Grid.Col span={6}>磁盘缓存大小</Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={0}
@@ -176,11 +176,11 @@ function NetworkPanel(
         if (status === "success") {
             setTestPortResult(testPort.arguments["port-is-open"] === true
                 ? {
-                    label: "Port is open",
+                    label: "端口连接成功",
                     color: "green",
                 }
                 : {
-                    label: "Port unreachable",
+                    label: "端口不可连接",
                     color: "red",
                 });
         } else if (status === "loading") {
@@ -190,7 +190,7 @@ function NetworkPanel(
             });
         } else {
             setTestPortResult({
-                label: "API error",
+                label: "API 错误",
                 color: "red",
             });
         }
@@ -212,7 +212,7 @@ function NetworkPanel(
             onError: (e) => {
                 console.log(e);
                 notifications.show({
-                    title: "Error updating blocklist",
+                    title: "更新黑名单列表失败",
                     message: e.message,
                     color: "red",
                 });
@@ -223,7 +223,7 @@ function NetworkPanel(
     return (
         <Grid align="center">
             <Grid.Col span={3}>
-                Incoming port:
+                连接端口号:
             </Grid.Col>
             <Grid.Col span={3}>
                 <NumberInput
@@ -236,13 +236,12 @@ function NetworkPanel(
             <Grid.Col span={3}>
                 <Tooltip
                     withArrow
-                    label="Checks currently configured port. If you made changes save them before testing.">
+                    label="如果更改了端口，测试前请先进行保存。">
                     <Button
                         w="100%"
                         onClick={onTestPort}
-                        title="Save port changes before testing"
                     >
-                        Test port
+                        测试端口
                     </Button>
                 </Tooltip>
             </Grid.Col>
@@ -254,25 +253,25 @@ function NetworkPanel(
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
-                    label="Let daemon pick a random port"
+                    label="启用随机端口"
                     {...form.getInputProps("session.peer-port-random-on-start", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
-                    label="Enable UPnP port forwarding"
+                    label="启用端口转发(UPnP)"
                     {...form.getInputProps("session.port-forwarding-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={3}>
-                Encryption:
+                加密:
             </Grid.Col>
             <Grid.Col span={3}>
                 <NativeSelect
-                    data={["tolerated", "preferred", "required"]}
+                    data={[{value:"tolerated",label:"允许加密"},{value:"preferred",label:"优先加密"},{value:"required",label:"强制加密"}]}
                     {...form.getInputProps("session.encryption")} />
             </Grid.Col>
             <Grid.Col span={6}></Grid.Col>
             <Grid.Col span={3}>
-                Global peer limit:
+                全局最大链接数:
             </Grid.Col>
             <Grid.Col span={3}>
                 <NumberInput
@@ -281,7 +280,7 @@ function NetworkPanel(
                 />
             </Grid.Col>
             <Grid.Col span={3}>
-                per torrent:
+                单种最大链接数:
             </Grid.Col>
             <Grid.Col span={3}>
                 <NumberInput
@@ -291,27 +290,27 @@ function NetworkPanel(
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
-                    label="Enable peer exchange"
+                    label="启用用户交换"
                     {...form.getInputProps("session.pex-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
-                    label="Enable DHT"
+                    label="启用分布式哈希表(DHT)"
                     {...form.getInputProps("session.dht-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
-                    label="Enable local discovery"
+                    label="启用本地用户发现(LPD)"
                     {...form.getInputProps("session.lpd-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
-                    label="Enable uTP"
+                    label="启用带宽管理(µTP)"
                     {...form.getInputProps("session.utp-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
-                    label="Enable blocklist:"
+                    label="启用黑名单列表:"
                     {...form.getInputProps("session.blocklist-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={6}>
@@ -320,18 +319,18 @@ function NetworkPanel(
                     disabled={session["blocklist-enabled"] !== true} />
             </Grid.Col>
             <Grid.Col span={6}>
-                <Text>Blocklist contains {session["blocklist-size"]} entries</Text>
+                <Text>可用规则数量 {session["blocklist-size"]} 条</Text>
             </Grid.Col>
             <Grid.Col span={3}>
                 <Tooltip
                     withArrow
-                    label="Fetches currently configured blocklist. If you made changes save them before updating.">
+                    label="如果有修改内容，更新之前先进行保存。">
                     <Button
                         w="100%"
                         onClick={onUpdateBlocklist}
-                        title="Save blocklist changes before updating"
+                        title=""
                     >
-                        Update blocklist
+                        更新黑名单
                     </Button>
                 </Tooltip>
             </Grid.Col>
@@ -364,7 +363,7 @@ function TimeInput(props: NumberInputProps) {
     />;
 }
 
-const DaysOfTheWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+const DaysOfTheWeek = ["星期天", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"] as const;
 
 function DayOfWeekCheckbox({ form, day, session }: { form: UseFormReturnType<FormValues>, day: number, session: SessionInfo }) {
     return <Checkbox
@@ -383,11 +382,11 @@ function BandwidthPanel({ form, session }: { form: UseFormReturnType<FormValues>
     return (
         <Grid align="center">
             <Grid.Col span={6}></Grid.Col>
-            <Grid.Col span={3}>Normal</Grid.Col>
-            <Grid.Col span={3}>Alternate</Grid.Col>
+            <Grid.Col span={3}>正常</Grid.Col>
+            <Grid.Col span={3}>备用</Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
-                    label="Maximum download speed (KB/s):"
+                    label="最大下载速度 (KB/s):"
                     {...form.getInputProps("session.speed-limit-down-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={3}>
@@ -403,7 +402,7 @@ function BandwidthPanel({ form, session }: { form: UseFormReturnType<FormValues>
             </Grid.Col>
             <Grid.Col span={6}>
                 <Checkbox
-                    label="Maximum upload speed (KB/s):"
+                    label="最大上传速度 (KB/s):"
                     {...form.getInputProps("session.speed-limit-up-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={3}>
@@ -419,15 +418,15 @@ function BandwidthPanel({ form, session }: { form: UseFormReturnType<FormValues>
             </Grid.Col>
             <Grid.Col>
                 <Checkbox
-                    label="Use alternate bandwidth settings"
+                    label="启用备用带宽"
                     {...form.getInputProps("session.alt-speed-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col>
                 <Checkbox
-                    label="Apply alternate bandwidth settings automatically"
+                    label="自动启用备用带宽设置(时间段内)"
                     {...form.getInputProps("session.alt-speed-time-enabled", { type: "checkbox" })} />
             </Grid.Col>
-            <Grid.Col span={2}>From:</Grid.Col>
+            <Grid.Col span={1}>从:</Grid.Col>
             <Grid.Col span={3}>
                 <TimeInput
                     min={0}
@@ -435,7 +434,7 @@ function BandwidthPanel({ form, session }: { form: UseFormReturnType<FormValues>
                     {...form.getInputProps("session.alt-speed-time-begin")}
                     disabled={session["alt-speed-time-enabled"] !== true} />
             </Grid.Col>
-            <Grid.Col span={2}>to:</Grid.Col>
+            <Grid.Col span={1}>到:</Grid.Col>
             <Grid.Col span={3}>
                 <TimeInput
                     min={0}
@@ -444,8 +443,7 @@ function BandwidthPanel({ form, session }: { form: UseFormReturnType<FormValues>
                     disabled={session["alt-speed-time-enabled"] !== true} />
             </Grid.Col>
             <Grid.Col span={2}></Grid.Col>
-            <Grid.Col span={2}>Days:</Grid.Col>
-            <Grid.Col span={10}>
+            <Grid.Col span={12}>
                 <Group>
                     {DaysOfTheWeek.map((_, day) =>
                         <DayOfWeekCheckbox key={day} form={form} day={day} session={session} />)}
@@ -460,7 +458,7 @@ function QueuePanel({ form, session }: { form: UseFormReturnType<FormValues>, se
         <Grid align="center">
             <Grid.Col span={8}>
                 <Checkbox
-                    label="Download queue size"
+                    label="启用下载队列，最大同时下载数"
                     {...form.getInputProps("session.download-queue-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={2}>
@@ -472,7 +470,7 @@ function QueuePanel({ form, session }: { form: UseFormReturnType<FormValues>, se
             <Grid.Col span={2}></Grid.Col>
             <Grid.Col span={8}>
                 <Checkbox
-                    label="Seed queue size"
+                    label="启用上传队列，最大同时上传数"
                     {...form.getInputProps("session.seed-queue-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={2}>
@@ -484,7 +482,7 @@ function QueuePanel({ form, session }: { form: UseFormReturnType<FormValues>, se
             <Grid.Col span={2}></Grid.Col>
             <Grid.Col span={8}>
                 <Checkbox
-                    label="Consider torrents as stalled when idle for"
+                    label="种子超过该时间无流量，移出队列"
                     {...form.getInputProps("session.queue-stalled-enabled", { type: "checkbox" })} />
             </Grid.Col>
             <Grid.Col span={2}>
@@ -493,7 +491,7 @@ function QueuePanel({ form, session }: { form: UseFormReturnType<FormValues>, se
                     {...form.getInputProps("session.queue-stalled-minutes")}
                     disabled={session["queue-stalled-enabled"] !== true} />
             </Grid.Col>
-            <Grid.Col span={2}>minutes</Grid.Col>
+            <Grid.Col span={2}>分钟</Grid.Col>
         </Grid>
     );
 }
@@ -522,14 +520,14 @@ export function DaemonSettingsModal(props: ModalState) {
             mutation.mutate(form.values.session, {
                 onSuccess: () => {
                     notifications.show({
-                        message: "Session saved successfully",
+                        message: "配置保存成功",
                         color: "green",
                     });
                     props.close();
                 },
                 onError: (error) => {
                     notifications.show({
-                        title: "Failed to update daemon settings",
+                        title: "配置保存失败",
                         message: String(error),
                         color: "red",
                     });
@@ -548,18 +546,18 @@ export function DaemonSettingsModal(props: ModalState) {
             onSave={onSave}
             saveLoading={mutation.isLoading}
             centered
-            title="Server Settings"
+            title="参数设置"
         >
             <Box pos="relative">
                 <LoadingOverlay visible={fetchStatus === "fetching"} overlayBlur={2} />
                 <Tabs defaultValue="polling" mih="25rem">
                     <Tabs.List>
-                        <Tabs.Tab value="polling" p="lg">Polling</Tabs.Tab>
-                        <Tabs.Tab value="download" p="lg">Download</Tabs.Tab>
-                        <Tabs.Tab value="network" p="lg">Network</Tabs.Tab>
-                        <Tabs.Tab value="bandwidth" p="lg">Bandwidth</Tabs.Tab>
-                        <Tabs.Tab value="queue" p="lg">Queue</Tabs.Tab>
-                        {!TAURI && <Tabs.Tab value="interface" p="lg">Interface</Tabs.Tab>}
+                        <Tabs.Tab value="polling" p="lg">轮询设置</Tabs.Tab>
+                        <Tabs.Tab value="download" p="lg">下载设置</Tabs.Tab>
+                        <Tabs.Tab value="network" p="lg">网络设置</Tabs.Tab>
+                        <Tabs.Tab value="bandwidth" p="lg">带宽设置</Tabs.Tab>
+                        <Tabs.Tab value="queue" p="lg">队列设置</Tabs.Tab>
+                        {!TAURI && <Tabs.Tab value="interface" p="lg">接口设置</Tabs.Tab>}
                     </Tabs.List>
                     {form.values.session !== undefined
                         ? <>

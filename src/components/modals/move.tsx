@@ -46,9 +46,9 @@ export function MoveModal(props: ModalState) {
                     addPath(location.path);
                 },
                 onError: (e) => {
-                    console.log("Error moving torrents", e);
+                    console.log("移动种子异常", e);
                     notifications.show({
-                        message: "Error moving torrents",
+                        message: "移动种子异常",
                         color: "red",
                     });
                 },
@@ -70,20 +70,20 @@ export function MoveModal(props: ModalState) {
 
     return <>
         {props.opened &&
-            <HkModal opened={props.opened} onClose={props.close} title="Move torrents" centered size="lg">
+            <HkModal opened={props.opened} onClose={props.close} title="变更数据保存目录" centered size="lg">
                 <Divider my="sm" />
-                <Text mb="md">Enter new location for</Text>
                 <TorrentsNames />
+                <Text mb="md">输入新目录:</Text>
                 <TorrentLocation {...location} focusPath/>
                 <Checkbox
-                    label="Move torrent data to new location"
+                    label="同时移动数据(如果不钩选，则从新目录下查找文件)"
                     checked={moveData}
                     onChange={(e) => { setMoveData(e.currentTarget.checked); }}
                     my="xl" />
                 <Divider my="sm" />
                 <Group position="center" spacing="md">
-                    <Button onClick={onMove} variant="filled">Move</Button>
-                    <Button onClick={props.close} variant="light">Cancel</Button>
+                    <Button onClick={onMove} variant="filled">确定</Button>
+                    <Button onClick={props.close} variant="light">取消</Button>
                 </Group>
             </HkModal>}
     </>;

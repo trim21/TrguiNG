@@ -56,9 +56,9 @@ export function RemoveModal(props: ModalState) {
             },
             {
                 onError: (e) => {
-                    console.log("Error removing torrents", e);
+                    console.log("删除种子出错", e);
                     notifications.show({
-                        message: "Error removing torrents",
+                        message: "删除种子出错",
                         color: "red",
                     });
                 },
@@ -68,21 +68,21 @@ export function RemoveModal(props: ModalState) {
     }, [remove, serverSelected, deleteData, props]);
 
     return (
-        <HkModal opened={props.opened} onClose={props.close} title="Remove torrents" centered size="lg">
+        <HkModal opened={props.opened} onClose={props.close} title="删除种子确认" centered size="lg">
             <Divider my="sm" />
-            <Text mb="md">Are you sure you want to remove following torrents?</Text>
+            <Text mb="md">确认要删除已选择的种子吗？</Text>
             <TorrentsNames />
             <Checkbox
-                label="Delete torrent data"
+                label="同时删除数据"
                 checked={deleteData}
                 onChange={onDeleteDataChanged}
                 my="xl" />
             <Divider my="sm" />
             <Group position="center" spacing="md">
                 <Button onClick={onDelete} variant="filled" color="red" data-autofocus>
-                    {deleteData ? "Delete" : "Remove"}
+                    {deleteData ? "删除种子和数据" : "删除种子"}
                 </Button>
-                <Button onClick={props.close} variant="light">Cancel</Button>
+                <Button onClick={props.close} variant="light">取消</Button>
             </Group>
         </HkModal>
     );

@@ -336,7 +336,7 @@ export function FileTreeTable(props: FileTreeTableProps) {
             path = pathMapFromServer(path, serverConfig);
             invoke("shell_open", { path, reveal }).catch((e) => {
                 notifications.show({
-                    title: "Error opening path",
+                    title: "打开失败",
                     message: path,
                     color: "red",
                 });
@@ -523,7 +523,7 @@ function FiletreeContextMenu(props: {
                     onClick={() => { onOpen(true); }}
                     icon={<Icon.Folder2Open size="1.1rem" />}
                     disabled={props.currentRow === ""}>
-                    <Text>Open folder</Text>
+                    <Text>打开目录</Text>
                 </Menu.Item>
                 <Menu.Divider />
             </>}
