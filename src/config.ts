@@ -95,7 +95,7 @@ export type SectionsVisibility<S extends string> = Array<{
 
 export const WindowMinimizeOptions = ["minimize", "hide"] as const;
 export const WindowCloseOptions = ["hide", "close", "quit"] as const;
-export const DeleteTorrentDataOptions = ["default off", "default on", "remember selection"] as const;
+export const DeleteTorrentDataOptions = ["默认关", "默认开", "记住选择"] as const;
 export const ProgressbarStyleOptions = ["plain", "animated", "colorful"] as const;
 export type WindowMinimizeOption = typeof WindowMinimizeOptions[number];
 export type WindowCloseOption = typeof WindowCloseOptions[number];
@@ -253,7 +253,7 @@ const DefaultSettings: Settings = {
         flatFileTree: false,
         mainSplit: "vertical",
         skipAddDialog: false,
-        deleteTorrentData: "default off",
+        deleteTorrentData: "默认关",
         deleteTorrentDataSelection: false,
         numLastSaveDirs: 20,
         preconfiguredLabels: [],

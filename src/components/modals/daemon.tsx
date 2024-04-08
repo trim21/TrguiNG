@@ -557,7 +557,7 @@ export function DaemonSettingsModal(props: ModalState) {
                         <Tabs.Tab value="network" p="lg">网络设置</Tabs.Tab>
                         <Tabs.Tab value="bandwidth" p="lg">带宽设置</Tabs.Tab>
                         <Tabs.Tab value="queue" p="lg">队列设置</Tabs.Tab>
-                        {!TAURI && <Tabs.Tab value="interface" p="lg">接口设置</Tabs.Tab>}
+                        {!TAURI && <Tabs.Tab value="interface" p="lg">其他设置</Tabs.Tab>}
                     </Tabs.List>
                     {form.values.session !== undefined
                         ? <>

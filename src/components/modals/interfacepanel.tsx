@@ -105,25 +105,25 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                 <ColorSchemeToggle />
             </Grid.Col>
             <Grid.Col span={1}>
-                Font
+                字体
             </Grid.Col>
             <Grid.Col span={4}>
                 <NativeSelect data={systemFonts} value={style.font} onChange={(e) => { setFont(e.currentTarget.value); }} />
             </Grid.Col>
             <Grid.Col span={2}>
-                Text color
+                字体颜色
             </Grid.Col>
             <Grid.Col span={1}>
                 <ColorChooser value={style[theme.colorScheme].color ?? defaultColor} onChange={setTextColor} />
             </Grid.Col>
             <Grid.Col span={2}>
-                Background
+                背景颜色
             </Grid.Col>
             <Grid.Col span={1}>
                 <ColorChooser value={style[theme.colorScheme].backgroundColor ?? defaultBg} onChange={setBgColor} />
             </Grid.Col>
             <Grid.Col span={3}>
-                Delete torrent data
+                删除数据文件
             </Grid.Col>
             <Grid.Col span={3}>
                 <NativeSelect data={DeleteTorrentDataOptions as unknown as string[]}
@@ -131,17 +131,17 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                     onChange={(e) => { setFieldValue("interface.deleteTorrentData", e.target.value); }} />
             </Grid.Col>
             <Grid.Col span={6}>
-                <Checkbox label="Skip add torrent dialog"
+                <Checkbox label="跳过添加种子对话框"
                     {...props.form.getInputProps("interface.skipAddDialog", { type: "checkbox" })} />
             </Grid.Col>
-            <Grid.Col span={4}>Max number of saved download directories</Grid.Col>
+            <Grid.Col span={4}>保存的下载目录的最大数量</Grid.Col>
             <Grid.Col span={2}>
                 <NumberInput
                     min={1}
                     max={100}
                     {...props.form.getInputProps("interface.numLastSaveDirs")} />
             </Grid.Col>
-            <Grid.Col span={3}>Progressbars</Grid.Col>
+            <Grid.Col span={3}>进度条样式</Grid.Col>
             <Grid.Col span={3}>
                 <NativeSelect data={ProgressbarStyleOptions as unknown as string[]}
                     value={props.form.values.interface.progressbarStyle}
@@ -152,7 +152,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                     data={props.form.values.interface.preconfiguredLabels}
                     value={props.form.values.interface.preconfiguredLabels}
                     onChange={setPreconfiguredLabels}
-                    label="Preconfigured labels"
+                    label="预配置标签"
                     withinPortal
                     searchable
                     creatable
@@ -166,7 +166,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
             </Grid.Col>
             <Grid.Col>
                 <Textarea minRows={6}
-                    label="Default tracker list"
+                    label="默认Tracker列表(BT下载使用)"
                     value={props.form.values.interface.defaultTrackers.join("\n")}
                     onChange={(e) => {
                         props.form.setFieldValue(

@@ -32,8 +32,8 @@ export function RemoveModal(props: ModalState) {
 
     useEffect(() => {
         if (props.opened) {
-            if (config.values.interface.deleteTorrentData !== "remember selection") {
-                setDeleteData(config.values.interface.deleteTorrentData === "default on");
+            if (config.values.interface.deleteTorrentData !== "记住选择") {
+                setDeleteData(config.values.interface.deleteTorrentData === "默认开");
             } else {
                 setDeleteData(config.values.interface.deleteTorrentDataSelection);
             }
