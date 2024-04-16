@@ -157,7 +157,7 @@ function TransferTable(props: { torrent: Torrent }) {
                 <DetailItem name="分享率:">{shareRatio}</DetailItem>
                 <DetailItem name="下载限速:"><SpeedLimit {...props} field="download" /></DetailItem>
                 <DetailItem name="上传限速:"><SpeedLimit {...props} field="upload" /></DetailItem>
-                <DetailItem name="备用组:">{props.torrent.group}</DetailItem>
+                <DetailItem name="备用带宽:">{props.torrent.group}</DetailItem>
                 <DetailItem name="种子|活跃:"><Seeds {...props} /></DetailItem>
                 <DetailItem name="下载|活跃:"><Peers {...props} /></DetailItem>
                 <DetailItem name="最大链接数:">{props.torrent.maxConnectedPeers}</DetailItem>
@@ -384,32 +384,32 @@ function ServerStats() {
 
 const DetailsPanels = React.memo(function DetailsPanels({ torrent }: { torrent: Torrent | undefined }) {
     return (<>
-        <Tabs.Panel value="General" h="100%">
+        <Tabs.Panel value="常规" h="100%">
             {torrent !== undefined
                 ? <GeneralPane torrent={torrent} />
                 : <></>}
         </Tabs.Panel>
-        <Tabs.Panel value="Files" h="100%">
+        <Tabs.Panel value="文件" h="100%">
             {torrent !== undefined
                 ? <FileTreePane torrent={torrent} />
                 : <></>}
         </Tabs.Panel>
-        <Tabs.Panel value="Pieces" h="100%">
+        <Tabs.Panel value="块" h="100%">
             {torrent !== undefined
                 ? <PiecesCanvas torrent={torrent} />
                 : <></>}
         </Tabs.Panel>
-        <Tabs.Panel value="Peers" h="100%">
+        <Tabs.Panel value="用户" h="100%">
             {torrent !== undefined
                 ? <PeersTable torrent={torrent} />
                 : <></>}
         </Tabs.Panel>
-        <Tabs.Panel value="Trackers" h="100%">
+        <Tabs.Panel value="Tracker" h="100%">
             {torrent !== undefined
                 ? <TrackersTable torrent={torrent} />
                 : <></>}
         </Tabs.Panel>
-        <Tabs.Panel value="Server statistics" h="100%">
+        <Tabs.Panel value="数据统计" h="100%">
             <ServerStats />
         </Tabs.Panel>
     </>);
@@ -451,45 +451,45 @@ function Details(props: DetailsProps) {
                 <MemoSectionsContextMenu
                     sections={tabs} setSections={setTabs}
                     contextMenuInfo={info} setContextMenuInfo={setInfo} />
-                {tabs[tabsMap.General].visible &&
-                    <Tabs.Tab value="General" disabled={torrent === undefined} style={{ order: tabsMap.General }}>
+                {tabs[tabsMap["常规"]].visible &&
+                    <Tabs.Tab value="常规" disabled={torrent === undefined} style={{ order: tabsMap["常规"] }}>
                         <Group>
                             <Icon.InfoCircle size="1.1rem" />
                             常规
                         </Group>
                     </Tabs.Tab>}
-                {tabs[tabsMap.Files].visible &&
-                    <Tabs.Tab value="Files" disabled={torrent === undefined} style={{ order: tabsMap.Files }}>
+                {tabs[tabsMap["文件"]].visible &&
+                    <Tabs.Tab value="文件" disabled={torrent === undefined} style={{ order: tabsMap["文件"] }}>
                         <Group>
                             <Icon.Files size="1.1rem" />
                             {`文件${torrent !== undefined ? ` (${torrent.files.length as number})` : ""}`}
                         </Group>
                     </Tabs.Tab>}
-                {tabs[tabsMap.Pieces].visible &&
-                    <Tabs.Tab value="Pieces" disabled={torrent === undefined} style={{ order: tabsMap.Pieces }}>
+                {tabs[tabsMap["块"]].visible &&
+                    <Tabs.Tab value="块" disabled={torrent === undefined} style={{ order: tabsMap["块"] }}>
                         <Group>
                             <Icon.Grid3x2 size="1.1rem" />
                             {`块${torrent !== undefined ? ` (${torrent.pieceCount as number})` : ""}`}
                         </Group>
                     </Tabs.Tab>}
-                {tabs[tabsMap.Peers].visible &&
-                    <Tabs.Tab value="Peers" disabled={torrent === undefined} style={{ order: tabsMap.Peers }}>
+                {tabs[tabsMap["用户"]].visible &&
+                    <Tabs.Tab value="用户" disabled={torrent === undefined} style={{ order: tabsMap["用户"] }}>
                         <Group>
                             <Icon.People size="1.1rem" />
                             用户
                         </Group>
                     </Tabs.Tab>}
-                {tabs[tabsMap.Trackers].visible &&
-                    <Tabs.Tab value="Trackers" disabled={torrent === undefined} style={{ order: tabsMap.Trackers }}>
+                {tabs[tabsMap.Tracker].visible &&
+                    <Tabs.Tab value="Tracker" disabled={torrent === undefined} style={{ order: tabsMap.Tracker }}>
                         <Group>
                             <Icon.Wifi size="1.1rem" />
-                            Trackers
+                            Tracker
                         </Group>
                     </Tabs.Tab>}
-                {tabs[tabsMap["<spacer>"]].visible &&
-                    <Box style={{ flexGrow: 1, order: tabsMap["<spacer>"] }} />}
-                {tabs[tabsMap["Server statistics"]].visible &&
-                    <Tabs.Tab value="Server statistics" style={{ order: tabsMap["Server statistics"] }}>
+                {tabs[tabsMap["分割"]].visible &&
+                    <Box style={{ flexGrow: 1, order: tabsMap["分割"] }} />}
+                {tabs[tabsMap["数据统计"]].visible &&
+                    <Tabs.Tab value="数据统计" style={{ order: tabsMap["数据统计"] }}>
                         <Group>
                             <Icon.ArrowDownUp size="1.1rem" />
                             数据统计

@@ -62,6 +62,7 @@ interface TableSettings {
     sortBy: SortByConfig[],
 }
 
+// TableName 无需汉化
 const TableNames = ["torrents", "filetree", "filetreebrief", "trackers", "peers"] as const;
 export type TableName = typeof TableNames[number];
 
@@ -69,7 +70,7 @@ const Sashes = ["vertical", "horizontal"] as const;
 type SashName = typeof Sashes[number];
 export type SplitType = SashName;
 
-const FilterSections = ["种子状态", "数据目录", "用户标签", "服务器分布"] as const;
+const FilterSections = ["种子状态", "数据目录", "用户标签", "服务器分布", "错误分布"] as const;
 export type FilterSectionName = typeof FilterSections[number];
 
 const StatusFilters = [
@@ -79,12 +80,12 @@ export type StatusFilterName = typeof StatusFilters[number];
 type StatusFiltersVisibility = Record<StatusFilterName, boolean>;
 
 const StatusbarSections = [
-    "Connection", "Download speed ", "Upload speed", "Free space", "Total", "Selected",
+    "连接状态", "下载速度", "上传速度", "剩余空间", "列表总大小", "选中大小",
 ] as const;
 type StatusbarSectionName = typeof StatusbarSections[number];
 
 const DetailsSections = [
-    "General", "Files", "Pieces", "Peers", "Trackers", "<spacer>", "Server statistics",
+    "常规", "文件", "块", "用户", "Tracker", "分割", "数据统计",
 ] as const;
 type DetailsSectionsName = typeof DetailsSections[number];
 
@@ -145,6 +146,8 @@ interface Settings {
         filterSections: SectionsVisibility<FilterSectionName>,
         statusFiltersVisibility: StatusFiltersVisibility,
         compactDirectories: boolean,
+        showFilterGroupSize: boolean,
+        selectFilterGroupOnDbClk: boolean,
         statusBarSections: SectionsVisibility<StatusbarSectionName>,
         statusBarGlobalSpeeds: boolean,
         showFiltersPanel: boolean,
@@ -156,6 +159,7 @@ interface Settings {
         skipAddDialog: boolean,
         deleteTorrentData: DeleteTorrentDataOption,
         deleteTorrentDataSelection: boolean,
+        deleteTorrentDataWhenOneSelection: boolean,
         numLastSaveDirs: number,
         preconfiguredLabels: string[],
         defaultTrackers: string[],
@@ -238,11 +242,13 @@ const DefaultSettings: Settings = {
             ]),
         ) as Record<StatusFilterName, boolean>,
         compactDirectories: false,
+        showFilterGroupSize: true,
+        selectFilterGroupOnDbClk: true,
         statusBarSections: StatusbarSections.map((section) => ({
             section,
             visible: true,
         })),
-        statusBarGlobalSpeeds: false,
+        statusBarGlobalSpeeds: true,
         showFiltersPanel: true,
         showDetailsPanel: true,
         detailsTabs: DetailsSections.map((section) => ({
@@ -255,6 +261,7 @@ const DefaultSettings: Settings = {
         skipAddDialog: false,
         deleteTorrentData: "默认关",
         deleteTorrentDataSelection: false,
+        deleteTorrentDataWhenOneSelection: false,
         numLastSaveDirs: 20,
         preconfiguredLabels: [],
         defaultTrackers: [...DefaultTrackerList],
@@ -304,6 +311,26 @@ export class Config {
             }
         }
         this.values.interface.filterSections = this.values.interface.filterSections.filter(s => FilterSections.indexOf(s.section) >= 0);
+
+        for (const section of DetailsSections) {
+            if (!this.values.interface.detailsTabs.find(s => s.section == section)) {
+                this.values.interface.detailsTabs.push({
+                    section,
+                    visible: true,
+                })
+            }
+        }
+        this.values.interface.detailsTabs = this.values.interface.detailsTabs.filter(s => DetailsSections.indexOf(s.section) >= 0);
+
+        for (const section of StatusbarSections) {
+            if (!this.values.interface.statusBarSections.find(s => s.section == section)) {
+                this.values.interface.statusBarSections.push({
+                    section,
+                    visible: true,
+                })
+            }
+        }
+        this.values.interface.statusBarSections = this.values.interface.statusBarSections.filter(s => StatusbarSections.indexOf(s.section) >= 0);
 
         return this;
     }

@@ -23,7 +23,15 @@ import { useServerTorrentData, useServerRpcVersion, useServerSelectedTorrents } 
 import type { TorrentAllFieldsType, TorrentFieldsType } from "rpc/transmission";
 import { PriorityColors, PriorityStrings, Status, StatusStrings, TorrentMinimumFields } from "rpc/transmission";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
-import { bytesToHumanReadableStr, fileSystemSafeName, modKeyString, pathMapFromServer, secondsToHumanReadableStr, timestampToDateString } from "trutil";
+import {
+    bytesToHumanReadableStr,
+    ensurePathDelimiter,
+    fileSystemSafeName,
+    modKeyString,
+    pathMapFromServer,
+    secondsToHumanReadableStr,
+    timestampToDateString
+} from "trutil";
 import type { ProgressBarVariant } from "../progressbar";
 import { ProgressBar } from "../progressbar";
 import type { AccessorFn, CellContext } from "@tanstack/table-core";
@@ -41,6 +49,7 @@ import type { TorrentActionMethodsType } from "rpc/client";
 import * as Icon from "react-bootstrap-icons";
 import { useHotkeysContext } from "hotkeys";
 const { TAURI, invoke, copyToClipboard } = await import(/* webpackChunkName: "taurishim" */"taurishim");
+import {RunStatus} from "../../status";
 
 interface TableFieldProps {
     torrent: Torrent,
@@ -147,7 +156,7 @@ const AllFields: readonly TableField[] = [
     { name: "secondsSeeding", label: "做种时长", component: TimeField },
     { name: "isPrivate", label: "私有", component: StringField },
     { name: "labels", label: "用户标签", component: LabelsField },
-    { name: "group", label: "备用组", component: StringField },
+    { name: "group", label: "备用带宽", component: StringField },
     { name: "file-count", label: "文件数目", component: PositiveNumberField },
     { name: "pieceCount", label: "块数目", component: PositiveNumberField },
     { name: "metadataPercentComplete", label: "元数据", component: PercentBarField },
@@ -406,6 +415,7 @@ export function TorrentTable(props: {
     selectedReducer: TableSelectReducer,
     onColumnVisibilityChange: React.Dispatch<TorrentFieldsType[]>,
     scrollToRow?: { id: string },
+    setStatus: (status: RunStatus) => void,
 }) {
     const serverConfig = useContext(ServerConfigContext);
 
@@ -439,7 +449,7 @@ export function TorrentTable(props: {
     }, [props.modals, serverConfig]);
 
     const serverSelected = useServerSelectedTorrents();
-    const selected = useMemo(() => Array.from(serverSelected).map(String), [serverSelected]);
+    const getSelected = useCallback(() => Array.from(serverSelected).map(String), [serverSelected]);
 
     const [info, setInfo, handler] = useContextMenu();
 
@@ -449,13 +459,14 @@ export function TorrentTable(props: {
                 contextMenuInfo={info}
                 setContextMenuInfo={setInfo}
                 modals={props.modals}
-                onRowDoubleClick={onRowDoubleClick} />
+                onRowDoubleClick={onRowDoubleClick}
+                setStatus={props.setStatus}/>
             <TrguiTable<Torrent> {...{
                 tablename: "torrents",
                 columns: Columns,
                 data: props.torrents,
                 getRowId,
-                selected,
+                selected: getSelected(),
                 selectedReducer: props.selectedReducer,
                 setCurrent: props.setCurrentTorrent,
                 onVisibilityChange,
@@ -471,6 +482,7 @@ function TorrentContextMenu(props: {
     setContextMenuInfo: (i: ContextMenuInfo) => void,
     modals: React.RefObject<ModalCallbacks>,
     onRowDoubleClick: (t: Torrent, reveal: boolean) => void,
+    setStatus: (status: RunStatus) => void,
 }) {
     const serverData = useServerTorrentData();
     const serverSelected = useServerSelectedTorrents();
@@ -517,6 +529,43 @@ function TorrentContextMenu(props: {
         setQueueItemRect(new DOMRect(0, -100, 0, 0));
     }, []);
 
+    const copyNames = useCallback(() => {
+        if (serverSelected.size === 0) return;
+
+        let names = new Map<string, number>();
+        serverData.torrents.forEach((t) => {
+            if (serverSelected.has(t.id)) {
+                if (!names.has(t.name)) names.set(t.name, 0);
+            }
+        });
+
+        copyToClipboard(Array.from(names.keys()).join("\n"));
+
+        notifications.show({
+            message: `名称已复制到剪切板`,
+            color: "green",
+        });
+    }, [serverData.torrents, serverSelected]);
+
+    const copyPaths = useCallback(() => {
+        if (serverSelected.size === 0) return;
+
+        let paths = new Map<string, number>();
+        serverData.torrents.forEach((t) => {
+            const path = ensurePathDelimiter(t.downloadDir) + fileSystemSafeName(t.name);
+            if (serverSelected.has(t.id)) {
+                if (!paths.has(path)) paths.set(path, 0);
+            }
+        });
+
+        copyToClipboard(Array.from(paths.keys()).join("\n"));
+
+        notifications.show({
+            message: `路径已复制到剪切板`,
+            color: "green",
+        });
+    }, [serverData.torrents, serverSelected]);
+
     const copyMagnetLinks = useCallback(() => {
         if (serverSelected.size === 0) return;
 
@@ -535,9 +584,9 @@ function TorrentContextMenu(props: {
     const hk = useHotkeysContext();
 
     useEffect(() => {
-        hk.handlers.copyToClipboard = copyMagnetLinks;
+        hk.handlers.copyToClipboard = copyNames;
         return () => { hk.handlers.copyToClipboard = () => { }; };
-    }, [copyMagnetLinks, hk]);
+    }, [copyNames, hk]);
 
     const theme = useMantineTheme();
 
@@ -579,22 +628,22 @@ function TorrentContextMenu(props: {
                 </Menu.Target>
                 <Menu.Dropdown miw="10rem">
                     <Menu.Item
-                        onClick={() => { torrentAction("queue-move-top", "Torrents queue updated"); }}
+                        onClick={() => { torrentAction("queue-move-top", "队列已更新"); }}
                         icon={<Icon.ChevronDoubleUp size="1.1rem" />}>
                         队列排到最前
                     </Menu.Item>
                     <Menu.Item
-                        onClick={() => { torrentAction("queue-move-up", "Torrents queue updated"); }}
+                        onClick={() => { torrentAction("queue-move-up", "队列已更新"); }}
                         icon={<Icon.ChevronUp size="1.1rem" />}>
                         队列向上移动
                     </Menu.Item>
                     <Menu.Item
-                        onClick={() => { torrentAction("queue-move-down", "Torrents queue updated"); }}
+                        onClick={() => { torrentAction("queue-move-down", "队列已更新"); }}
                         icon={<Icon.ChevronDown size="1.1rem" />}>
                         队列向下移动
                     </Menu.Item>
                     <Menu.Item
-                        onClick={() => { torrentAction("queue-move-bottom", "Torrents queue updated"); }}
+                        onClick={() => { torrentAction("queue-move-bottom", "队列已更新"); }}
                         icon={<Icon.ChevronDoubleDown size="1.1rem" />}>
                         队列排到最后
                     </Menu.Item>
@@ -676,20 +725,35 @@ function TorrentContextMenu(props: {
                     变更数据保存目录
                 </Menu.Item>
                 <Menu.Divider />
+                <Menu.Item
+                    onClick={copyNames}
+                    onMouseEnter={closeQueueSubmenu}
+                    icon={<Icon.ClipboardCheckFill size="1.1rem" />}
+                    disabled={serverSelected.size === 0}
+                    rightSection={<Kbd>{`${modKeyString()} C`}</Kbd>}>
+                    复制选中种子的名称
+                </Menu.Item>
+                <Menu.Item
+                    onClick={copyPaths}
+                    onMouseEnter={closeQueueSubmenu}
+                    icon={<Icon.ClipboardCheckFill size="1.1rem" />}
+                    disabled={serverSelected.size === 0}>
+                    复制选中种子的路径
+                </Menu.Item>
+                <Menu.Item
+                    onClick={copyMagnetLinks}
+                    onMouseEnter={closeQueueSubmenu}
+                    icon={<Icon.MagnetFill size="1.1rem" />}
+                    disabled={serverSelected.size === 0}>
+                    复制选中种子的磁力链接
+                </Menu.Item>
+                <Menu.Divider />
                 <Menu.Item ref={queueRef}
                     icon={<Icon.ThreeDots size="1.1rem" />}
                     rightSection={<Icon.ChevronRight size="0.8rem" />}
                     onMouseEnter={openQueueSubmenu}
                     disabled={serverSelected.size === 0}>
                     队列
-                </Menu.Item>
-                <Menu.Item
-                    onClick={copyMagnetLinks}
-                    onMouseEnter={closeQueueSubmenu}
-                    icon={<Icon.MagnetFill size="1.1rem" />}
-                    disabled={serverSelected.size === 0}
-                    rightSection={<Kbd>{`${modKeyString()} C`}</Kbd>}>
-                    复制磁力链接
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => props.modals.current?.setLabels()}

@@ -27,7 +27,7 @@ import { Box, Button, Divider, Flex, Menu, Portal } from "@mantine/core";
 import {bytesToHumanReadableStr, eventHasModKey, useForceRender} from "trutil";
 import { useContextMenu } from "./contextmenu";
 import { MemoSectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
-import {useServerTorrentData} from "../rpc/torrent";
+import {useServerSelectedTorrents, useServerTorrentData} from "../rpc/torrent";
 
 export interface TorrentFilter {
     id: string,
@@ -123,6 +123,7 @@ interface WithCurrentFilters {
         verb: "set" | "toggle",
         filter: TorrentFilter,
     }>,
+    setSearchTracker: (tracker: string) => void,
 }
 
 interface FiltersProps extends WithCurrentFilters {
@@ -133,12 +134,15 @@ interface FilterRowProps extends WithCurrentFilters {
     id: string,
     filter: NamedFilter,
     count: number,
+    showSize: boolean,
+    selectAllOnDbClk: boolean,
 }
 
 const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
     const serverData = useServerTorrentData();
-    const dirTorrents = serverData.torrents.filter(props.filter.filter);
-    const dirSize = bytesToHumanReadableStr(dirTorrents.reduce((p, t) => p + (t.sizeWhenDone as number), 0));
+    const filterTorrents = serverData.torrents.filter(props.filter.filter);
+    const serverSelected = useServerSelectedTorrents();
+    let filterSize = props.showSize ? bytesToHumanReadableStr(filterTorrents.reduce((p, t) => p + (t.sizeWhenDone as number), 0)) : "";
     return <Flex align="center" gap="sm" px="xs"
         className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
         onClick={(event) => {
@@ -146,11 +150,21 @@ const FilterRow = React.memo(function FilterRow(props: FilterRowProps) {
                 verb: eventHasModKey(event) ? "toggle" : "set",
                 filter: { id: props.id, filter: props.filter.filter },
             });
+            props.setSearchTracker("");
+        }}
+        onDoubleClick={(event) => {
+            if (props.selectAllOnDbClk) {
+                serverSelected.clear();
+                filterTorrents.forEach((t) => {
+                    serverSelected.add(t.id);
+                });
+            }
+            props.setSearchTracker("");
         }}>
         <div className="icon-container"><props.filter.icon /></div>
         <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.filter.name}</div>
-        <div style={{ flexShrink: 0 }}>{`(${props.count})`}</div>
-        <div style={{ flexShrink: 1, marginLeft: "auto" }}>{`[${dirSize}] `}</div>
+        <div style={{ flexShrink: 0, fontSize: "small", opacity: 0.8 }}>{`(${props.count})`}</div>
+        {props.showSize && <div style={{ flexShrink: 0, marginLeft: "auto", fontSize: "small", opacity: 0.8 }}>{`[${filterSize}]`}</div>}
     </Flex>;
 });
 
@@ -170,10 +184,20 @@ const TrackerFilterRow = React.memo(function TrackerFilterRow(props: Omit<Filter
     }} />;
 });
 
+const ErrorFilterRow = React.memo(function ErrorFilterRow(props: Omit<FilterRowProps, "filter" | "id"> & { error: string }) {
+    return <FilterRow {...props} id={`error-${props.error}`} filter={{
+        name: props.error,
+        filter: (t: Torrent) => t.cachedError === props.error,
+        icon: StatusIcons.Error,
+    }} />;
+});
+
 interface DirFilterRowProps extends FiltersProps {
     id: string,
     dir: Directory,
     expandedReducer: ({ verb, value }: { verb: "add" | "remove", value: string }) => void,
+    showSize: boolean,
+    selectAllOnDbClk: boolean,
 }
 
 function DirFilterRow(props: DirFilterRowProps) {
@@ -197,11 +221,12 @@ function DirFilterRow(props: DirFilterRowProps) {
     const expandable = props.dir.subdirs.size > 0;
 
     const serverData = useServerTorrentData();
+    const serverSelected = useServerSelectedTorrents();
     const dirTorrents = serverData.torrents.filter(filter);
-    const dirSize = bytesToHumanReadableStr(dirTorrents.reduce((p, t) => p + (t.sizeWhenDone as number), 0));
+    let dirSize = props.showSize ? bytesToHumanReadableStr(dirTorrents.reduce((p, t) => p + (t.sizeWhenDone as number), 0)) : ""
 
     return (
-        <Flex align="center" gap="sm"
+        <Flex align="center" gap="sm" px="xs"
             style={{ paddingLeft: `${props.dir.level * 1.4 + 0.25}em`, cursor: "default" }}
             className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
             onClick={(event) => {
@@ -209,6 +234,16 @@ function DirFilterRow(props: DirFilterRowProps) {
                     verb: eventHasModKey(event) ? "toggle" : "set",
                     filter: { id: props.id, filter },
                 });
+                props.setSearchTracker("");
+            }}
+            onDoubleClick={(event) => {
+                if (props.selectAllOnDbClk) {
+                    serverSelected.clear();
+                    dirTorrents.forEach((t) => {
+                        serverSelected.add(t.id);
+                    });
+                }
+                props.setSearchTracker("");
             }}>
             <div className="icon-container">
                 {expandable
@@ -218,9 +253,9 @@ function DirFilterRow(props: DirFilterRowProps) {
                     : <Icon.Folder size="1.1rem" />
                 }
             </div>
-            <div style={{ flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{props.dir.name}</div>
-            <div style={{ flexShrink: 0 }}>{`(${props.dir.count})`}</div>
-            <div style={{ flexShrink: 1, marginLeft: "auto" }}>{`[${dirSize}] `}</div>
+            <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.dir.name}</div>
+            <div style={{ flexShrink: 0, fontSize: "small", opacity: 0.8 }}>{`(${props.dir.count})`}</div>
+            {props.showSize && <div style={{ flexShrink: 0, marginLeft: "auto", fontSize: "small", opacity: 0.8 }}>{`[${dirSize}]`}</div>}
         </Flex>
     );
 }
@@ -310,7 +345,7 @@ function flattenTree(root: Directory): Directory[] {
     return result;
 }
 
-export const Filters = React.memo(function Filters({ torrents, currentFilters, setCurrentFilters }: FiltersProps) {
+export const Filters = React.memo(function Filters({ torrents, currentFilters, setCurrentFilters, setSearchTracker }: FiltersProps) {
     const config = useContext(ConfigContext);
     const serverConfig = useContext(ServerConfigContext);
     const forceRender = useForceRender();
@@ -338,22 +373,28 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         return flattenTree(tree);
     }, [paths, serverConfig.expandedDirFilters, config.values.interface.compactDirectories]);
 
-    const [labels, trackers] = useMemo(() => {
+    const [labels, trackers, errors] = useMemo(() => {
         const labels: Record<string, number> = {};
         const trackers: Record<string, number> = {};
+        const errors: Record<string, number> = {};
         config.values.interface.preconfiguredLabels.forEach((label) => { labels[label] = 0; });
 
-        torrents.forEach((t) => t.labels?.forEach((l: string) => {
-            if (!(l in labels)) labels[l] = 0;
-            labels[l] = labels[l] + 1;
-        }));
-
         torrents.forEach((t) => {
+            t.labels?.forEach((l: string) => {
+                if (!(l in labels)) labels[l] = 0;
+                labels[l] = labels[l] + 1;
+            })
+
             if (!(t.cachedMainTracker in trackers)) trackers[t.cachedMainTracker] = 0;
             trackers[t.cachedMainTracker] = trackers[t.cachedMainTracker] + 1;
+
+            if (t.cachedError != "") {
+                if (!(t.cachedError in errors)) errors[t.cachedError] = 0;
+                errors[t.cachedError] = errors[t.cachedError] + 1;
+            }
         });
 
-        return [labels, trackers];
+        return [labels, trackers, errors];
     }, [config, torrents]);
 
 
@@ -365,13 +406,17 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
     const [sectionsMap, setSectionsMap] = useState(getSectionsMap(sections));
     const [statusFiltersVisibility, setStatusFiltersVisibility] = useState(config.values.interface.statusFiltersVisibility);
     const [compactDirectories, setCompactDirectories] = useState(config.values.interface.compactDirectories);
+    const [showFilterGroupSize, setShowFilterGroupSize] = useState(config.values.interface.showFilterGroupSize);
+    const [selectFilterGroupOnDbClk, setSelectFilterGroupOnDbClk] = useState(config.values.interface.selectFilterGroupOnDbClk);
 
     useEffect(() => {
         config.values.interface.filterSections = sections;
         config.values.interface.statusFiltersVisibility = statusFiltersVisibility;
         config.values.interface.compactDirectories = compactDirectories;
+        config.values.interface.showFilterGroupSize = showFilterGroupSize;
+        config.values.interface.selectFilterGroupOnDbClk = selectFilterGroupOnDbClk;
         setSectionsMap(getSectionsMap(sections));
-    }, [config, sections, statusFiltersVisibility, compactDirectories]);
+    }, [config, sections, statusFiltersVisibility, compactDirectories, showFilterGroupSize, selectFilterGroupOnDbClk]);
 
     const [info, setInfo, handler] = useContextMenu();
 
@@ -410,6 +455,16 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
         e.stopPropagation();
         setCompactDirectories(!compactDirectories);
     }, [compactDirectories]);
+
+    const onShowFilterGroupSizeClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setShowFilterGroupSize(!showFilterGroupSize);
+    }, [showFilterGroupSize]);
+
+    const onSelectFilterGroupOnDbClkClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectFilterGroupOnDbClk(!selectFilterGroupOnDbClk);
+    }, [selectFilterGroupOnDbClk]);
 
     return (<>
         <Menu
@@ -495,6 +550,20 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                 >
                     目录简洁展示
                 </Menu.Item>
+                <Menu.Item
+                    icon={showFilterGroupSize ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                    onMouseEnter={closeStatusFiltersSubmenu}
+                    onMouseDown={onShowFilterGroupSizeClick}
+                >
+                    显示分组体积
+                </Menu.Item>
+                <Menu.Item
+                    icon={selectFilterGroupOnDbClk ? <Icon.Check size="1rem" /> : <Box miw="1rem" />}
+                    onMouseEnter={closeStatusFiltersSubmenu}
+                    onMouseDown={onSelectFilterGroupOnDbClkClick}
+                >
+                    双击全选分组
+                </Menu.Item>
             </MemoSectionsContextMenu>
             {sections[sectionsMap["种子状态"]]?.visible && <div style={{ order: sectionsMap["种子状态"] }}>
                 <Divider mx="sm" label="种子状态" labelPosition="center" />
@@ -502,31 +571,44 @@ export const Filters = React.memo(function Filters({ torrents, currentFilters, s
                     (f.required === true || statusFiltersVisibility[f.name]) && <FilterRow key={`status-${f.name}`}
                         id={`status-${f.name}`} filter={f}
                         count={torrents.filter(f.filter).length}
-                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />)}
+                        showSize={showFilterGroupSize} selectAllOnDbClk={selectFilterGroupOnDbClk}
+                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} setSearchTracker={setSearchTracker} />)}
             </div>}
             {sections[sectionsMap["数据目录"]]?.visible && <div style={{ order: sectionsMap["数据目录"] }}>
                 <Divider mx="sm" mt="md" label="数据目录" labelPosition="center" />
                 {dirs.map((d) =>
                     <DirFilterRow key={`dir-${d.path}`} id={`dir-${d.path}`}
-                        dir={d} expandedReducer={expandedReducer} {...{ torrents, currentFilters, setCurrentFilters }} />)}
+                        showSize={showFilterGroupSize} selectAllOnDbClk={selectFilterGroupOnDbClk}
+                        dir={d} expandedReducer={expandedReducer} {...{ torrents, currentFilters, setCurrentFilters, setSearchTracker }} />)}
             </div>}
             {sections[sectionsMap["用户标签"]]?.visible && <div style={{ order: sectionsMap["用户标签"] }}>
                 <Divider mx="sm" mt="md" label="用户标签" labelPosition="center" />
                 <FilterRow
                     id="nolabels" filter={noLabelsFilter}
                     count={torrents.filter(noLabelsFilter.filter).length}
-                    currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />
+                    showSize={showFilterGroupSize} selectAllOnDbClk={selectFilterGroupOnDbClk}
+                    currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} setSearchTracker={setSearchTracker} />
                 {Object.keys(labels).sort().map((label) =>
                     <LabelFilterRow key={`labels-${label}`} label={label}
                         count={labels[label]}
-                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />)}
+                        showSize={showFilterGroupSize} selectAllOnDbClk={selectFilterGroupOnDbClk}
+                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} setSearchTracker={setSearchTracker} />)}
             </div>}
             {sections[sectionsMap["服务器分布"]]?.visible && <div style={{ order: sectionsMap["服务器分布"] }}>
                 <Divider mx="sm" mt="md" label="服务器分布" labelPosition="center" />
                 {Object.keys(trackers).sort().map((tracker) =>
                     <TrackerFilterRow key={`trackers-${tracker}`} tracker={tracker}
                         count={trackers[tracker]}
-                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} />)}
+                        showSize={showFilterGroupSize} selectAllOnDbClk={selectFilterGroupOnDbClk}
+                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} setSearchTracker={setSearchTracker} />)}
+            </div>}
+            {sections[sectionsMap["错误分布"]]?.visible && <div style={{ order: sectionsMap["错误分布"] }}>
+                <Divider mx="sm" mt="md" label="错误分布" labelPosition="center" />
+                {Object.keys(errors).sort().map((error) =>
+                    <ErrorFilterRow key={`errors-${error}`} error={error}
+                        count={errors[error]}
+                        showSize={showFilterGroupSize} selectAllOnDbClk={selectFilterGroupOnDbClk}
+                        currentFilters={currentFilters} setCurrentFilters={setCurrentFilters} setSearchTracker={setSearchTracker} />)}
             </div>}
         </Flex>
     </>);

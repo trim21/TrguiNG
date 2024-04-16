@@ -103,7 +103,7 @@ export function EditTorrent(props: ModalState) {
     return <>{props.opened &&
         <SaveCancelModal
             opened={props.opened}
-            size="lg"
+            size="xl"
             onClose={props.close}
             onSave={onSave}
             centered
@@ -193,7 +193,7 @@ export function EditTorrent(props: ModalState) {
                         disabled={form.values.seedIdleMode !== 1} />
                 </Grid.Col>
                 <Grid.Col span={2}>
-                    minutes
+                    分钟
                 </Grid.Col>
             </Grid>
         </SaveCancelModal>}

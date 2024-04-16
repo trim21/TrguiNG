@@ -156,7 +156,7 @@ export function InterfaceSettigsPanel<V extends InterfaceFormValues>(props: { fo
                     withinPortal
                     searchable
                     creatable
-                    getCreateLabel={(query) => `+ Add ${query}`}
+                    getCreateLabel={(query) => `+ 新增 ${query}`}
                     onCreate={(query) => {
                         setPreconfiguredLabels([...props.form.values.interface.preconfiguredLabels, query]);
                         return query;

@@ -17,7 +17,7 @@
  */
 
 import "../css/custom.css";
-import { Box, Flex, Loader, Overlay, Title } from "@mantine/core";
+import {Box, Divider, Flex, Grid, Loader, Overlay, Textarea, Title} from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { SplitType } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
@@ -37,6 +37,9 @@ import { useAppHotkeys, useHotkeysContext } from "hotkeys";
 import { SplitLayout } from "./splitlayout";
 import { useDisclosure, useToggle } from "@mantine/hooks";
 import type { ServerTabsRef } from "./servertabs";
+import Split from "react-split";
+import {RunStatus} from "../status";
+import {bytesToHumanReadableStr} from "../trutil";
 
 function currentFiltersReducer(
     oldFilters: TorrentFilter[],
@@ -110,16 +113,25 @@ interface ServerProps {
 export function Server({ hostname, tabsRef }: ServerProps) {
     useAppHotkeys();
 
+    let status = new RunStatus();
+    const [statusIde, setStatusIde] = useState<boolean>(status.ide);
+    const [statusTitle, setStatusTitle] = useState<string | undefined>(status.title);
+    const [statusContent, setStatusContent] = useState<string | undefined>(status.content);
+
     const [currentFilters, setCurrentFilters] = useReducer(currentFiltersReducer, [{ id: "", filter: DefaultFilter }]);
 
     const [searchTerms, setSearchTerms] = useState<string[]>([]);
+    const [searchTracker, setSearchTracker] = useState<string>("");
     const searchFilter = useCallback((t: Torrent) => {
         const name = t.name.toLowerCase() as string;
         for (const term of searchTerms) {
             if (!name.includes(term)) return false;
         }
+        if (searchTracker !== "" && t.cachedMainTracker !== searchTracker) {
+            return false;
+        }
         return true;
-    }, [searchTerms]);
+    }, [searchTerms, searchTracker]);
 
     const [updates, runUpdates] = useState<boolean>(true);
 
@@ -192,9 +204,46 @@ export function Server({ hostname, tabsRef }: ServerProps) {
         config.values.interface.mainSplit = mainSplit;
     }, [config, showFiltersPanel, showDetailsPanel, mainSplit]);
 
+    useEffect(() => {
+        if (statusIde && selectedTorrents) {
+            let torrents = selectedTorrents as Set<number>;
+            const selected = filteredTorrents.filter((t) => torrents.has(t.id));
+            if (selected.length > 0) {
+                const title = "当前选中 (" + torrents.size + ") [" + bytesToHumanReadableStr(selected.reduce((p, t) => p + (t.sizeWhenDone as number), 0)) + "]";
+                let id = 1;
+                const content = selected.map((t) => id++ + ": " + t.name).join("\n");
+                setStatusTitle(title);
+                setStatusContent(content);
+            } else {
+                setStatusTitle("无任务");
+                setStatusContent("");
+            }
+        }
+    }, [selectedTorrents, filteredTorrents, statusIde, setStatusTitle, setStatusContent]);
+
+    const updateStatus = useCallback(
+        (s :RunStatus) => {
+            setStatusIde(s.ide);
+            if (s.title !== undefined) setStatusTitle(s.title);
+            if (s.content !== undefined) setStatusContent(s.content);
+            }, [setStatusIde, setStatusTitle, setStatusContent]);
+
+    const filteredTrackers = useMemo(() => {
+        const trackers: Record<string, number> = {};
+        const filtered = torrents?.filter((t) => {
+            return currentFilters.find((f) => !f.filter(t)) === undefined;
+        }) ?? [];
+        filtered.forEach((t) => {
+            if (!(t.cachedMainTracker in trackers)) trackers[t.cachedMainTracker] = 0;
+            trackers[t.cachedMainTracker] = trackers[t.cachedMainTracker] + 1;
+        });
+        if (!trackers[searchTracker]) setSearchTracker("");
+        return trackers;
+    }, [torrents, currentFilters, searchTracker, setSearchTracker]);
+
     return <ServerContext data={serverData} selected={selectedTorrents} rpc={rpcVersion}>
         <Flex direction="column" w="100%" h="100%" sx={{ position: "relative" }}>
-            <MemoizedServerModals ref={modals} {...{ runUpdates, tabsRef }} serverName={serverConfig.name} />
+            <MemoizedServerModals ref={modals} {...{ runUpdates, tabsRef }} serverName={serverConfig.name} setStatus={updateStatus} />
             {overlayVisible && <Overlay blur={10}>
                 <Flex align="center" justify="center" h="100%" direction="column" gap="xl">
                     {sessionIsLoading
@@ -212,6 +261,9 @@ export function Server({ hostname, tabsRef }: ServerProps) {
             <Box p="sm" sx={(theme) => ({ borderBottom: "1px solid", borderColor: theme.colors.dark[3] })}>
                 <MemoizedToolbar
                     setSearchTerms={setSearchTerms}
+                    searchTracker={searchTracker}
+                    setSearchTracker={setSearchTracker}
+                    trackers={filteredTrackers}
                     modals={modals}
                     altSpeedMode={session?.["alt-speed-enabled"] ?? false}
                     toggleFiltersPanel={toggleFiltersPanel}
@@ -219,27 +271,57 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                     toggleMainSplit={toggleMainSplit}
                 />
             </Box>
-            <SplitLayout key={`split-${showFiltersPanel ? "1" : "0"}-${showDetailsPanel ? "1" : "0"}-${mainSplit}`}
+            <SplitLayout key={`split-${showFiltersPanel ? "1" : "0"}-0-${mainSplit}`}
                 mainSplit={mainSplit}
                 left={showFiltersPanel
-                    ? <div className="scrollable">
-                        <Filters
-                            torrents={torrents ?? []}
-                            currentFilters={currentFilters}
-                            setCurrentFilters={setCurrentFilters} />
-                    </div>
-                    : undefined}
+                    ? <Split
+                        direction={"vertical"}
+                        sizes={[80, 20]}
+                        snapOffset={0}
+                        gutterSize={6}
+                        className={`split-vertical`}
+                    >
+                        <Box className="scrollable">
+                            <Filters
+                                torrents={torrents ?? []}
+                                currentFilters={currentFilters}
+                                setCurrentFilters={setCurrentFilters}
+                                setSearchTracker={setSearchTracker} />
+                        </Box>
+                        <Flex direction="column" h="100%" w="100%">
+                            <span style={{width: "100%", height: "auto", fontSize:"small", paddingLeft: "0.2rem"}}>{statusTitle}</span>
+                            <textarea style={{width: "100%", height: "100%", lineHeight: 1.3, overflow: "auto", top: 0, left: 0, resize:"none", fontSize:"small"}} wrap={"off"} readOnly={true}
+                                      value={statusContent}/>
+                        </Flex>
+                    </Split>: undefined}
                 right={
-                    <TorrentTable
-                        modals={modals}
-                        torrents={filteredTorrents}
-                        setCurrentTorrent={setCurrentTorrent}
-                        selectedTorrents={selectedTorrents}
-                        selectedReducer={selectedReducer}
-                        onColumnVisibilityChange={setTableRequiredFields}
-                        scrollToRow={scrollToRow} />
-                }
-                bottom={showDetailsPanel
+                    showFiltersPanel?
+                    <SplitLayout key={`split-${showFiltersPanel ? "1" : "0"}-0-${mainSplit}`}
+                         mainSplit={mainSplit}
+                         left={undefined}
+                         right={
+                             <TorrentTable
+                                 modals={modals}
+                                 torrents={filteredTorrents}
+                                 setCurrentTorrent={setCurrentTorrent}
+                                 selectedTorrents={selectedTorrents}
+                                 selectedReducer={selectedReducer}
+                                 onColumnVisibilityChange={setTableRequiredFields}
+                                 scrollToRow={scrollToRow}
+                                 setStatus={updateStatus} />}
+                         bottom={showDetailsPanel
+                             ? <MemoizedDetails torrentId={currentTorrent} updates={updates} />
+                             : undefined}/>
+                    : <TorrentTable
+                            modals={modals}
+                            torrents={filteredTorrents}
+                            setCurrentTorrent={setCurrentTorrent}
+                            selectedTorrents={selectedTorrents}
+                            selectedReducer={selectedReducer}
+                            onColumnVisibilityChange={setTableRequiredFields}
+                            scrollToRow={scrollToRow}
+                            setStatus={updateStatus} />}
+                bottom={!showFiltersPanel && showDetailsPanel
                     ? <MemoizedDetails torrentId={currentTorrent} updates={updates} />
                     : undefined}
             />

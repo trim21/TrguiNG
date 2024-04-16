@@ -19,16 +19,18 @@
 import { Button, Checkbox, Divider, Group, Text } from "@mantine/core";
 import type { ModalState } from "./common";
 import { HkModal, TorrentsNames } from "./common";
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, {useCallback, useContext, useEffect, useMemo, useState} from "react";
 import { useRemoveTorrents } from "queries";
 import { notifications } from "@mantine/notifications";
-import { useServerSelectedTorrents } from "rpc/torrent";
+import {Torrent, useServerSelectedTorrents, useServerTorrentData} from "rpc/torrent";
 import { ConfigContext } from "config";
+import {ensurePathDelimiter, fileSystemSafeName} from "../../trutil";
 
 export function RemoveModal(props: ModalState) {
     const config = useContext(ConfigContext);
     const serverSelected = useServerSelectedTorrents();
     const [deleteData, setDeleteData] = useState<boolean>(false);
+    const [deleteDataWhenOne, setDeleteDataWhenOne] = useState<boolean>(false);
 
     useEffect(() => {
         if (props.opened) {
@@ -37,50 +39,136 @@ export function RemoveModal(props: ModalState) {
             } else {
                 setDeleteData(config.values.interface.deleteTorrentDataSelection);
             }
+            setDeleteDataWhenOne(config.values.interface.deleteTorrentDataWhenOneSelection);
         }
     }, [config, props.opened]);
 
     const onDeleteDataChanged = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.currentTarget.checked;
+        if (value) setDeleteDataWhenOne(false);
         setDeleteData(value);
         config.values.interface.deleteTorrentDataSelection = value;
     }, [config]);
 
+    const onDeleteDataWhenOneChanged = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.currentTarget.checked;
+        if (value) setDeleteData(false);
+        setDeleteDataWhenOne(value);
+        config.values.interface.deleteTorrentDataWhenOneSelection = value;
+    }, [config]);
+
     const remove = useRemoveTorrents();
+    const serverData = useServerTorrentData();
 
     const onDelete = useCallback(() => {
-        remove(
-            {
-                torrentIds: Array.from(serverSelected),
-                deleteData,
-            },
-            {
-                onError: (e) => {
-                    console.log("删除种子出错", e);
-                    notifications.show({
-                        message: "删除种子出错",
-                        color: "red",
-                    });
+        if (deleteDataWhenOne) {
+            const selectTorrents = serverData.torrents.filter((t) => serverSelected.has(t.id));
+            console.log(selectTorrents);
+            let allPaths = new Map<string, number>;
+            selectTorrents.forEach((t) => {
+                const path = ensurePathDelimiter(t.downloadDir) + fileSystemSafeName(t.name);
+                allPaths.set(path, 0);
+            });
+            serverData.torrents.forEach((t) => {
+                const path = ensurePathDelimiter(t.downloadDir) + fileSystemSafeName(t.name);
+                const count = allPaths.get(path) ?? -1;
+                if (count >= 0) {
+                    allPaths.set(path, count+1);
+                }
+            });
+            selectTorrents.forEach((t) => {
+                const path = ensurePathDelimiter(t.downloadDir) + fileSystemSafeName(t.name);
+                const count = allPaths.get(path) ?? -1;
+                if (count >= 0) {
+                    allPaths.set(path, count-1);
+                }
+            });
+            let notDeleteDataIds: number[] = [];
+            let deleteDataIds: number[] = [];
+            selectTorrents.forEach((t) => {
+                const path = ensurePathDelimiter(t.downloadDir) + fileSystemSafeName(t.name);
+                const count = allPaths.get(path) ?? -1;
+                if (count == 0) {
+                    deleteDataIds.push(t.id);
+                } else {
+                    notDeleteDataIds.push(t.id);
+                }
+            })
+            if (notDeleteDataIds.length > 0) {
+                remove(
+                    {
+                        torrentIds: notDeleteDataIds,
+                        deleteData: false,
+                    },
+                    {
+                        onError: (e) => {
+                            console.log("删除种子出错", e);
+                            notifications.show({
+                                message: "删除种子出错",
+                                color: "red",
+                            });
+                        },
+                    },
+                );
+            }
+            if (deleteDataIds.length > 0) {
+                remove(
+                    {
+                        torrentIds: deleteDataIds,
+                        deleteData: true,
+                    },
+                    {
+                        onError: (e) => {
+                            console.log("删除种子(含数据)出错", e);
+                            notifications.show({
+                                message: "删除种子(含数据)出错",
+                                color: "red",
+                            });
+                        },
+                    },
+                );
+            }
+        } else {
+            remove(
+                {
+                    torrentIds: Array.from(serverSelected),
+                    deleteData,
                 },
-            },
-        );
+                {
+                    onError: (e) => {
+                        console.log("删除种子出错", e);
+                        notifications.show({
+                            message: "删除种子出错",
+                            color: "red",
+                        });
+                    },
+                },
+            );
+        }
         props.close();
-    }, [remove, serverSelected, deleteData, props]);
+    }, [remove, serverData, serverSelected, deleteData, deleteDataWhenOne, props]);
 
     return (
-        <HkModal opened={props.opened} onClose={props.close} title="删除种子确认" centered size="lg">
+        <HkModal opened={props.opened} onClose={props.close} title="删除种子确认" centered size="xl">
             <Divider my="sm" />
             <Text mb="md">确认要删除已选择的种子吗？</Text>
             <TorrentsNames />
             <Checkbox
                 label="同时删除数据"
+                disabled={deleteDataWhenOne}
                 checked={deleteData}
                 onChange={onDeleteDataChanged}
+                my="xl" />
+            <Checkbox
+                label="没有其他站点保种则删除数据"
+                disabled={deleteData}
+                checked={deleteDataWhenOne}
+                onChange={onDeleteDataWhenOneChanged}
                 my="xl" />
             <Divider my="sm" />
             <Group position="center" spacing="md">
                 <Button onClick={onDelete} variant="filled" color="red" data-autofocus>
-                    {deleteData ? "删除种子和数据" : "删除种子"}
+                    {deleteData ? "删除种子和数据" : (deleteDataWhenOne ? "删除种子和无保种数据" : "删除种子")}
                 </Button>
                 <Button onClick={props.close} variant="light">取消</Button>
             </Group>

@@ -16,7 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Box, Button, Checkbox, Divider, Flex, Group, Menu, SegmentedControl, Text, TextInput } from "@mantine/core";
+import {
+    Box,
+    Button,
+    Checkbox,
+    Divider,
+    Flex, Grid,
+    Group,
+    Menu, NumberInput,
+    SegmentedControl,
+    Text,
+    Textarea,
+    TextInput
+} from "@mantine/core";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ModalState, LocationData } from "./common";
 import { HkModal, LimitedNamesList, TorrentLabels, TorrentLocation, useTorrentLocation } from "./common";
@@ -32,6 +44,8 @@ import { useAddTorrent, useFileTree, useTorrentAddTrackers } from "queries";
 import { ConfigContext, ServerConfigContext } from "config";
 import type { ServerTabsRef } from "components/servertabs";
 import { bytesToHumanReadableStr, decodeMagnetLink } from "trutil";
+import {RunStatus} from "../../status";
+import {trim} from "lodash-es";
 const { TAURI, dialogOpen, invoke } = await import(/* webpackChunkName: "taurishim" */"taurishim");
 
 interface AddCommonProps extends React.PropsWithChildren {
@@ -43,6 +57,10 @@ interface AddCommonProps extends React.PropsWithChildren {
     priority: PriorityNumberType,
     setPriority: (p: PriorityNumberType) => void,
     disabled?: boolean,
+    delay: boolean,
+    setDelay: (b: boolean) => void,
+    delayTime: number,
+    setDelayTime: (n: number) => void,
 }
 
 function AddCommon(props: AddCommonProps) {
@@ -52,13 +70,28 @@ function AddCommon(props: AddCommonProps) {
         <TorrentLocation {...props.location} inputLabel="保存目录" disabled={props.disabled} />
         {rpcVersion >= 17 &&
             <TorrentLabels labels={props.labels} setLabels={props.setLabels} inputLabel="用户标签" disabled={props.disabled} />}
+        <Group mt="lg">
+            <Checkbox
+                my="xl"
+                pr="xl"
+                label="种子下载间隔"
+                checked={props.delay}
+                onChange={() => { props.setDelay(!props.delay); }} />
+            <NumberInput
+                w="5rem"
+                min={0}
+                disabled={!props.delay}
+                value={props.delayTime}
+                onChange={(v) => { props.setDelayTime(typeof v === "number" ? v : 5); }} />
+            秒
+        </Group>
         <Group>
             <Checkbox
                 label="自动开始"
                 checked={props.start}
                 disabled={props.disabled}
                 onChange={(e) => { props.setStart(e.currentTarget.checked); }}
-                my="xl"
+                my="md"
                 styles={{ root: { flexGrow: 1 } }} />
             {props.children}
             <SegmentedControl
@@ -78,13 +111,16 @@ interface AddCommonModalProps extends ModalState {
     serverName: string,
     uri: string | File | undefined,
     tabsRef: React.RefObject<ServerTabsRef>,
+    setStatus: (status: RunStatus) => void,
 }
 
 function useCommonProps() {
     const location = useTorrentLocation();
     const [labels, setLabels] = useState<string[]>([]);
-    const [start, setStart] = useState<boolean>(true);
+    const [start, setStart] = useState<boolean>(false);
     const [priority, setPriority] = useState<PriorityNumberType>(0);
+    const [delay, setDelay] = useState<boolean>(false);
+    const [delayTime, setDelayTime] = useState<number>(5);
 
     const props = useMemo<AddCommonProps>(() => ({
         location,
@@ -94,7 +130,11 @@ function useCommonProps() {
         setStart,
         priority,
         setPriority,
-    }), [location, labels, start, priority]);
+        delay,
+        setDelay,
+        delayTime,
+        setDelayTime,
+    }), [location, labels, start, priority, delay, delayTime]);
 
     return useMemo(() => ({
         location,
@@ -124,7 +164,7 @@ function TabSwitchDropdown({ tabsRef }: { tabsRef: React.RefObject<ServerTabsRef
             ? <></>
             : <Menu shadow="md" width={200} position="bottom-start">
                 <Menu.Target>
-                    <Button variant="subtle" title="Switch server">
+                    <Button variant="subtle" title="选择服务器">
                         {value}
                     </Button>
                 </Menu.Target>
@@ -199,18 +239,65 @@ export function AddMagnet(props: AddCommonModalProps) {
     const mutateAddTrackers = useTorrentAddTrackers();
 
     const onAdd = useCallback(() => {
-        if (magnet === "") return;
+        const magnets1 = magnet.split("\n");
+        let magnets : string[] = [];
+        magnets1.forEach((m)=> {
+            m = trim(m);
+            if (m !== "")  magnets.push(m);
+        })
+
+        if (magnets.length === 0) return;
+
+        let id = 1;
+        props.setStatus(new RunStatus(false, "准备下载", magnets.map((m) => id++ + ": " + m).join("\n")));
 
         if (existingTorrent === undefined) {
-            addMutation.mutate(
-                {
-                    url: magnet,
-                    downloadDir: common.location.path,
-                    labels: common.props.labels,
-                    paused: !common.start,
-                    priority: common.priority,
-                },
-            );
+            let magnetAsyncTasks: (() => Promise<void>)[] = [];
+            let index = 1;
+            magnets.forEach((m)=> {
+                magnetAsyncTasks.push(
+                    () => new Promise((resolve, reject) => {
+                        const title = "队列下载中 " + index + "/" + magnets.length;
+                        const last = index >= magnets.length;
+                        index++;
+
+                        props.setStatus(new RunStatus(false, title));
+                        const updateFn = () => {
+                            if (last || !common.props.delay || common.props.delayTime <= 0) {
+                                resolve();
+                            } else {
+                                let times = common.props.delayTime;
+                                let timer = setInterval(() => {
+                                    props.setStatus(new RunStatus(false, title + " - 等待 " + times + " 秒"));
+                                    if (times-- == 0) {
+                                        clearInterval(timer);
+                                        resolve();
+                                    }
+                                }, 1000);
+                            }
+                        }
+
+                        addMutation.mutate(
+                        {
+                            url: trim(m),
+                            downloadDir: common.location.path,
+                            labels: common.props.labels,
+                            paused: !common.start,
+                            priority: common.priority,
+                        },{
+                            onSuccess: updateFn,
+                            onError: updateFn,
+                        }
+                    )})
+                );
+            })
+            magnetAsyncTasks.reduce(
+                (promiseChain, currentTask) => promiseChain.then(currentTask),
+                Promise.resolve()
+            ).then(() => {
+                props.setStatus(new RunStatus(false, "队列下载完成"));
+                setTimeout(() => props.setStatus(new RunStatus(true)), 3000);
+            });
             common.location.addPath(common.location.path);
         } else {
             mutateAddTrackers(
@@ -218,7 +305,7 @@ export function AddMagnet(props: AddCommonModalProps) {
                 {
                     onSuccess: () => {
                         notifications.show({
-                            message: "服务器 Trackers 更新",
+                            message: "服务器 Tracker 更新",
                             color: "green",
                         });
                     },
@@ -227,7 +314,7 @@ export function AddMagnet(props: AddCommonModalProps) {
         }
         setMagnet("");
         close();
-    }, [existingTorrent, close, addMutation, magnet, common, mutateAddTrackers, magnetData]);
+    }, [existingTorrent, close, addMutation, magnet, common, mutateAddTrackers, magnetData, props.setStatus]);
 
     const config = useContext(ConfigContext);
     const shouldOpen = !config.values.interface.skipAddDialog || typeof props.uri !== "string";
@@ -238,15 +325,16 @@ export function AddMagnet(props: AddCommonModalProps) {
     }, [onAdd, props.opened, shouldOpen]);
 
     return <>{props.opened && shouldOpen &&
-        <HkModal opened={true} onClose={close} centered size="lg"
+        <HkModal opened={true} onClose={close} centered size="xl"
             styles={{ title: { flexGrow: 1 } }}
             title={<Flex w="100%" align="center" justify="space-between">
                 <span>添加种子磁力链接或者URL</span>
                 {TAURI && <TabSwitchDropdown tabsRef={props.tabsRef} />}
             </Flex>} >
             <Divider my="sm" />
-            <TextInput
-                label="磁力链接或者URL" w="100%"
+            <Textarea
+                minRows={10} wrap={"off"} style={ {overflow: "auto"} }
+                label="磁力链接或者URL，一行一个" w="100%"
                 value={magnet}
                 onChange={(e) => { setMagnet(e.currentTarget.value); }}
                 error={existingTorrent === undefined
@@ -257,9 +345,9 @@ export function AddMagnet(props: AddCommonModalProps) {
             <Group position="center" spacing="md">
                 <Button onClick={onAdd} variant="filled"
                     disabled={existingTorrent !== undefined && (magnetData?.trackers.length ?? 0) === 0}>
-                    {existingTorrent === undefined ? "添加" : "添加 Trackers"}
+                    {existingTorrent === undefined ? "添加" : "添加 Tracker"}
                 </Button>
-                <Button onClick={props.close} variant="light">Cancel</Button>
+                <Button onClick={props.close} variant="light">取消</Button>
             </Group>
         </HkModal>}
     </>;
@@ -534,7 +622,7 @@ export function AddTorrent(props: AddCommonModalProps) {
                 {
                     onSuccess: () => {
                         notifications.show({
-                            message: "服务器 Trackers 更新",
+                            message: "服务器 Tracker 更新",
                             color: "green",
                         });
                     },
@@ -574,15 +662,15 @@ export function AddTorrent(props: AddCommonModalProps) {
         {!TAURI && <input ref={filesInputRef} type="file" accept=".torrent" multiple
             style={{ position: "absolute", top: "-20rem", zIndex: -1 }} />}
         {shouldOpen &&
-            <HkModal opened={true} onClose={modalClose} centered size="lg"
+            <HkModal opened={true} onClose={modalClose} centered size="xl"
                 styles={{ title: { flexGrow: 1 } }}
                 title={<Flex w="100%" align="center" justify="space-between">
-                    <span>Add torrent</span>
+                    <span>添加种子文件</span>
                     {TAURI && <TabSwitchDropdown tabsRef={props.tabsRef} />}
                 </Flex>} >
                 <Divider my="sm" />
                 {torrentExists
-                    ? <Text color="red" fw="bold" fz="lg">Torrent already exists</Text>
+                    ? <Text color="red" fw="bold" fz="lg">种子已存在</Text>
                     : <LimitedNamesList names={names} limit={1} />}
                 <div style={{ position: "relative" }}>
                     <AddCommon {...common.props} disabled={torrentExists}>
@@ -592,12 +680,12 @@ export function AddTorrent(props: AddCommonModalProps) {
                             ? <></>
                             : <>
                                 <Button variant="subtle" disabled={torrentExists}
-                                    onClick={() => { setAllWanted(true); }} title="Mark all files wanted">
-                                    All
+                                    onClick={() => { setAllWanted(true); }} title="选中所有文件">
+                                    全选
                                 </Button>
                                 <Button variant="subtle" disabled={torrentExists}
-                                    onClick={() => { setAllWanted(false); }} title="Mark all files unwanted">
-                                    None
+                                    onClick={() => { setAllWanted(false); }} title="取消选中所有文件">
+                                    全不选
                                 </Button>
                             </>}
                     </AddCommon>
@@ -616,9 +704,9 @@ export function AddTorrent(props: AddCommonModalProps) {
                 <Group position="center" spacing="md">
                     <Button onClick={onAdd} variant="filled" data-autofocus
                         disabled={torrentExists && torrentData[0].trackers.length === 0}>
-                        {!torrentExists ? "添加" : "添加 Trackers"}
+                        {!torrentExists ? "添加" : "添加 Tracker"}
                     </Button>
-                    <Button onClick={modalClose} variant="light">Cancel</Button>
+                    <Button onClick={modalClose} variant="light">取消</Button>
                 </Group>
             </HkModal >}
     </>);

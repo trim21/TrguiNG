@@ -17,7 +17,7 @@
  */
 
 import type { MantineTheme } from "@mantine/core";
-import { ActionIcon, Button, Flex, Kbd, Menu, TextInput, useMantineTheme } from "@mantine/core";
+import {ActionIcon, Button, Flex, Grid, Kbd, Menu, NativeSelect, TextInput, useMantineTheme} from "@mantine/core";
 import debounce from "lodash-es/debounce";
 import React, { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Icon from "react-bootstrap-icons";
@@ -62,6 +62,9 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(function
 
 interface ToolbarProps {
     setSearchTerms: (terms: string[]) => void,
+    searchTracker: string,
+    setSearchTracker: (tracker: string) => void,
+    trackers: Record<string, number>,
     modals: React.RefObject<ModalCallbacks>,
     altSpeedMode: boolean,
     toggleFiltersPanel: () => void,
@@ -185,6 +188,24 @@ function Toolbar(props: ToolbarProps) {
                 .filter((s) => s !== ""));
     }, [debouncedSetSearchTerms]);
 
+    const trackersData = useMemo(()=>{
+        let count = 0;
+        const values = Object.keys(props.trackers).sort().map((tracker) => {
+            const n = props.trackers[tracker];
+            count += n;
+            return {value: tracker, label: tracker +  " (" + n + ")"}
+        });
+        return [{value: "", label: "<All Trackers>"}, ...values]
+    }, [props.trackers])
+
+    const onTackerChange = useCallback((tracker: string) => {
+        if (tracker == "") {
+            props.setSearchTracker("");
+        } else {
+            props.setSearchTracker(tracker);
+        }
+    }, [props]);
+
     const searchRef = useRef<HTMLInputElement>(null);
 
     const onSearchClear = useCallback(() => {
@@ -301,13 +322,16 @@ function Toolbar(props: ToolbarProps) {
 
             <TextInput mx="sm" ref={searchRef}
                 icon={<Icon.Search size="1rem" />}
-                placeholder={`search (${modKeyString()} + f)`}
+                placeholder={`搜索种子 (${modKeyString()} + f)`}
                 rightSection={<ActionIcon onClick={onSearchClear} title="Clear">
                     <Icon.XLg size="1rem" color={theme.colors.red[6]} />
                 </ActionIcon>}
                 onInput={onSearchInput}
                 styles={{ root: { flexGrow: 1 }, input: { height: "auto" } }}
             />
+            <NativeSelect w="auto" miw="20rem"
+                data={trackersData} value={props.searchTracker}
+                onChange={(e) => { onTackerChange(e.currentTarget.value); }} />
 
             <Menu shadow="md" width="12rem" withinPortal middlewares={{ shift: true, flip: true }}>
                 <Menu.Target>

@@ -73,6 +73,7 @@ export function LimitedNamesList({ names, limit }: { names: string[], limit?: nu
     const t = names.slice(0, limit);
 
     return <>
+        <Text mx="xl" mb="md">{`选中总数：${names.length}`}</Text>
         {t.map((s, i) => <Text key={i} mx="md" my="xs" px="sm" sx={{
             whiteSpace: "nowrap",
             overflow: "hidden",
@@ -177,7 +178,7 @@ export function TorrentLocation(props: LocationData) {
                             <ScrollArea.Autosize
                                 type="auto"
                                 mah="calc(100vh - 0.5rem)"
-                                miw="30rem"
+                                miw={TAURI ? "40.05rem" : "46.5rem"}
                                 offsetScrollbars
                                 styles={{ viewport: { paddingBottom: 0 } }}
                             >
@@ -187,7 +188,7 @@ export function TorrentLocation(props: LocationData) {
                                         rightSection={
                                             <ActionIcon
                                                 component="div"
-                                                title="Remove path"
+                                                title="移除"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     props.removePath(path);
@@ -266,7 +267,7 @@ export function TorrentLabels(props: TorrentLabelsProps) {
             creatable
             initiallyOpened={props.initiallyOpened}
             disabled={props.disabled}
-            getCreateLabel={(query) => `+ Add ${query}`}
+            getCreateLabel={(query) => `+ 新增 ${query}`}
             onCreate={(query) => {
                 setData((current) => [...current, query]);
                 return query;

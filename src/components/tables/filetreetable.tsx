@@ -59,11 +59,11 @@ interface TableField {
 }
 
 const AllFields: readonly TableField[] = [
-    { name: "name", label: "Name", component: NameField, briefField: true },
-    { name: "size", label: "Size", component: ByteSizeField, briefField: true },
-    { name: "done", label: "Done", component: ByteSizeField },
-    { name: "percent", label: "Percent", component: PercentBarField },
-    { name: "priority", label: "Priority", component: PriorityField },
+    { name: "name", label: "名称", component: NameField, briefField: true },
+    { name: "size", label: "总大小", component: ByteSizeField, briefField: true },
+    { name: "done", label: "已下载", component: ByteSizeField },
+    { name: "percent", label: "进度", component: PercentBarField },
+    { name: "priority", label: "优先级", component: PriorityField },
 ] as const;
 
 function NameField(props: TableFieldProps) {
@@ -273,7 +273,7 @@ function SearchBox({ setSearchTerms }: {
                 rightSection={<ActionIcon onClick={onSearchClear} title="Clear">
                     <Icon.XLg size="1rem" color={theme.colors.red[6]} />
                 </ActionIcon>}
-                placeholder="search files"
+                placeholder="搜索文件"
                 onInput={onSearchInput}
                 styles={{
                     root: {
@@ -517,7 +517,7 @@ function FiletreeContextMenu(props: {
                     onClick={() => { onOpen(false); }}
                     icon={<Icon.BoxArrowUpRight size="1.1rem" />}
                     disabled={props.currentRow === ""}>
-                    <Text weight="bold">Open</Text>
+                    <Text weight="bold">打开文件</Text>
                 </Menu.Item>
                 <Menu.Item
                     onClick={() => { onOpen(true); }}
@@ -531,54 +531,54 @@ function FiletreeContextMenu(props: {
                 onClick={() => { setPriority("priority-high"); }}
                 icon={<Icon.CircleFill color="tomato" size="1.1rem" />}
                 disabled={props.selected.length === 0}>
-                High priority
+                优先级-高
             </Menu.Item>
             <Menu.Item
                 onClick={() => { setPriority("priority-normal"); }}
                 icon={<Icon.CircleFill color="seagreen" size="1.1rem" />}
                 disabled={props.selected.length === 0}>
-                Normal priority
+                优先级-正常
             </Menu.Item>
             <Menu.Item
                 onClick={() => { setPriority("priority-low"); }}
                 icon={<Icon.CircleFill color="gold" size="1.1rem" />}
                 disabled={props.selected.length === 0}>
-                Low priority
+                优先级-低
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
                 onClick={() => { setWanted(true); }}
                 icon={<Checkbox checked readOnly />}
                 disabled={props.selected.length === 0}>
-                Set wanted
+                包含
             </Menu.Item>
             <Menu.Item
                 onClick={() => { setWanted(false); }}
                 icon={<Checkbox readOnly />}
                 disabled={props.selected.length === 0}>
-                Set unwanted
+                不包含
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
                 onClick={() => { props.setExpanded?.(true); }}
                 icon={<Icon.PlusSquare size="1.1rem" />}>
-                Expand all
+                展开所有
             </Menu.Item>
             <Menu.Item
                 onClick={() => { props.setExpanded?.(false); }}
                 icon={<Icon.DashSquare size="1.1rem" />}>
-                Collapse all
+                折叠所有
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
                 onClick={props.toggleFileSearchBox}
                 icon={<Icon.Search size="1.1rem" />}>
-                Toggle search
+                打开/关闭搜索
             </Menu.Item>
             <Menu.Item
                 onClick={toggleFlatFileTree}
                 icon={<Checkbox checked={!flatFileTree} readOnly />}>
-                Show as tree
+                树形列表
             </Menu.Item>
         </ContextMenu >
     );

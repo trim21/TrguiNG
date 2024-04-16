@@ -116,12 +116,12 @@ export function EditTrackers(props: ModalState) {
     return <>{props.opened &&
         <SaveCancelModal
             opened={props.opened}
-            size="lg"
+            size="xl"
             onClose={props.close}
             onSave={onSave}
             centered
-            title="修改种子Trackers"
-            mih="25rem"
+            title="修改种子Tracker"
+            h="25rem"
         >
             <LoadingOverlay visible={isLoading} />
             <Grid align="center">
@@ -135,7 +135,7 @@ export function EditTrackers(props: ModalState) {
                     <Button onClick={addDefaultTrackers}>添加到默认Trackers</Button>
                 </Grid.Col>
                 <Grid.Col>
-                    <Textarea minRows={10}
+                    <Textarea minRows={10} wrap={"off"} style={ {overflow: "auto"} }
                         {...form.getInputProps("trackerList")} />
                 </Grid.Col>
             </Grid>

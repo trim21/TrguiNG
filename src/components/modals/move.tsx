@@ -27,7 +27,7 @@ import { useServerSelectedTorrents, useServerTorrentData } from "rpc/torrent";
 export function MoveModal(props: ModalState) {
     const serverData = useServerTorrentData();
     const serverSelected = useServerSelectedTorrents();
-    const [moveData, setMoveData] = useState<boolean>(true);
+    const [moveData, setMoveData] = useState<boolean>(false);
 
     const location = useTorrentLocation();
     const { setPath, addPath } = location;
@@ -70,7 +70,7 @@ export function MoveModal(props: ModalState) {
 
     return <>
         {props.opened &&
-            <HkModal opened={props.opened} onClose={props.close} title="变更数据保存目录" centered size="lg">
+            <HkModal opened={props.opened} onClose={props.close} title="变更数据保存目录" centered size="xl">
                 <Divider my="sm" />
                 <TorrentsNames />
                 <Text mb="md">输入新目录:</Text>

@@ -50,8 +50,8 @@ export function EditLabelsModal(props: ModalState) {
     const onSave = useCallback(() => {
         if (rpcVersion < 16) {
             notifications.show({
-                title: "Can not set labels",
-                message: "Labels feature requires transmission 3.0 or later",
+                title: "用户标签设置失败",
+                message: "用户标签设置仅支持 >= transmission 3.0",
                 color: "red",
             });
             close();
@@ -65,13 +65,13 @@ export function EditLabelsModal(props: ModalState) {
             {
                 onSuccess: () => {
                     notifications.show({
-                        message: "Labels are updated",
+                        message: "用户标签已更新",
                         color: "green",
                     });
                 },
                 onError: (error) => {
                     notifications.show({
-                        title: "Failed to update labels",
+                        title: "用户标签设置失败",
                         message: String(error),
                         color: "red",
                     });
@@ -85,7 +85,7 @@ export function EditLabelsModal(props: ModalState) {
         {props.opened &&
             <SaveCancelModal
                 opened={props.opened}
-                size="lg"
+                size="xl"
                 onClose={props.close}
                 onSave={onSave}
                 centered
