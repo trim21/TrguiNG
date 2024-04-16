@@ -1,92 +1,21 @@
-# TrguiNG
-**Remote GUI for Transmission torrent daemon**
 
-![GitHub release](https://img.shields.io/github/v/release/OpenScopeProject/TrguiNG)
-![Downloads](https://img.shields.io/github/downloads/OpenScopeProject/TrguiNG/total)
-![Lint status](https://img.shields.io/github/actions/workflow/status/OpenScopeProject/TrguiNG/lint.yml?label=Lint&event=push)
+## 基于 [openscopeproject/TrguiNG](https://github.com/openscopeproject/TrguiNG) 汉化并增加部分功能
 
-![logo](https://i.imgur.com/QdgMWwW.png)
+## 新增功能 (240416a)
+1. 分组体积展示（可在分组区右键关闭该功能）
+2. 双击全选分组，方便快捷操作（可在分组区右键关闭该功能）
+3. 增加错误分布分组（可在分组区右键关闭该功能）
+4. 增加分组后的Tracker二级过滤（位于顶部搜索框右侧）
+5. 多链接下载，可设置下载间隔
+6. 调整布局，左下角增加状态指示（主要用于多链接下载展示进度，平常展示列表选中项）
+7. 种子列表右键菜单增加复制名称和路径（去重）
 
-`TrguiNG` is a rewrite of [transgui](https://github.com/transmission-remote-gui/transgui)
-project using [tauri](https://tauri.studio/).
-Frontend is written in typescript with [react.js](https://react.dev/) and
-[mantine](https://mantine.dev/) library. Backend for the app is written in
-[rust](https://www.rust-lang.org/).
+## PS. 主要是自用，有想加功能的可以提 issues，不保证实现
 
-You can use this program in 2 ways: as a native Windows/Linux/Mac app and as a web gui
-served by transmission itself by setting `$TRANSMISSION_WEB_HOME` environment variable
-to point to TrguiNG web assets.
-
-There are screenshots of the app available on the
-[project wiki](https://github.com/openscopeproject/TrguiNG/wiki).
-
-Some differentiating features:
-
-* Multi tabbed interface for concurrent server connections (native app only)
-* Torrent creation with fast multi threaded hashing (native app only)
-* Powerful torrent filtering options
-* Latest transmission features support: labels, bandwidth groups, sequential download
-* Dark and white theme
-
-Planned:
-
-* Better bandwidth groups support when API is ready (https://github.com/transmission/transmission/issues/5455)
-
-Transmission v2.40 or later is required.
-
-## Compiling
-
-Prerequisites:
-- [Node.js 16](https://nodejs.org/) or later
-- [rust 1.69](https://www.rust-lang.org/) or later
-- Geoip lookup database in mmdb format, put it in `src-tauri`
+## 安装介绍（docker 环境）
+1. 从 [releases](https://github.com/jayzcoder/TrguiNG/releases) 下载 `trguing-web-xxxx-zh.zip`
+2. 解压到 transmission 设置的 webui 目录即可
+3. transmission 需要正确映射并设置环境变量(确保 index.html 位于 TRANSMISSION_WEB_HOME 所在的目录第一层):
    ```
-   wget -nv -O src-tauri/dbip.mmdb "https://github.com/openscopeproject/TrguiNG/releases/latest/download/dbip.mmdb"
+   TRANSMISSION_WEB_HOME=/config/webui/trguing-zh
    ```
-   You can get latest db from [db-ip.com](https://db-ip.com/db/download/ip-to-country-lite).
-
-To compile simply run
-
-```
-$ npm install
-$ npm run build
-```
-
-This will generate optimized bundle in `dist` and a release binary in `src-tauri/target/release` folder.
-Also installer package will be available in `src-tauri/target/release/bundle/...`.
-
-The binary is statically linked and embeds all necessary assets except for the geoip database.
-It is completely self sufficient and can be used as a portable executable but for geoip lookup to work you
-need to install the app with provided installer.
-
-For development run in parallel
-
-```
-$ npm run webpack-serve
-$ npm run tauri-dev
-```
-
-Webpack will automatically watch changes in `src/` and refresh the app view, tauri will watch changes
-in `src-tauri/` and rebuild/restart the app as needed.
-
-## How to use TrguiNG as a web interface
-
-Transmission supports custom web interfaces, all you have to do is run the daemon with
-`$TRANSMISSION_WEB_HOME` variable pointing to the web assets that transmissinon will serve
-over it's `.../transmission/web/` endpoint.
-
-Example steps for debian:
-1. Download latest `trguing-web-xxxx.zip` zip from [releases](https://github.com/openscopeproject/TrguiNG/releases)
-   page.
-2. Unpack it anywhere, make sure that the user transmission runs under (by default `debian-transmission`)
-   has read permissions.
-3. Edit transmission daemon systemd unit file `/etc/systemd/system/multi-user.target.wants/transmission-daemon.service`
-   and add following to `[Service]` section:
-   ```
-   Environment=TRANSMISSION_WEB_HOME=/path/to/extracted/trguing/zip
-   ```
-4. Reload the unit file with `sudo systemctl daemon-reload`
-   and restart the service `sudo systemctl restart transmission-daemon`
-
-## License
-Project is distributed under GNU Affero General Public License v3, see `LICENSE.txt` for details.
