@@ -19,7 +19,7 @@
 import type { ServerConfig } from "config";
 import { useReducer } from "react";
 
-const SISuffixes = ["B", "KB", "MB", "GB", "TB"];
+const SISuffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB"];
 
 export function bytesToHumanReadableStr(value: number): string {
     let unit = "";
