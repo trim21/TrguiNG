@@ -54,30 +54,28 @@ export function VersionModal({ opened, close }: ModalState) {
 
     return (
         <HkModal opened={opened} onClose={close} size="lg" centered p="lg">
-            <Title order={2} mb="lg">TrguiNG</Title>
+            <Title order={2} mb="lg">TrguiNG - 中文版</Title>
             <Text>
-                Remote interface for&nbsp;
-                <Anchor href="https://transmissionbt.com/" target="_blank" rel="noreferrer">Transmission</Anchor>
-                &nbsp;torrent daemon
+                <Anchor href="https://transmissionbt.com/" target="_blank" rel="noreferrer">Transmission</Anchor> WebUI
             </Text>
             <Divider px="sm" my="xl" />
             <Flex gap="md" align="center">
                 <AppLogo style={{ flexShrink: 0 }} />
                 <Grid>
-                    <Grid.Col span={4}>Version</Grid.Col>
+                    <Grid.Col span={3}>版本</Grid.Col>
                     <Grid.Col span={8}>{appVersion.gitVersion}</Grid.Col>
-                    <Grid.Col span={4}>Frontend</Grid.Col>
+                    <Grid.Col span={3}>前端</Grid.Col>
                     <Grid.Col span={8}>{frontend}</Grid.Col>
-                    <Grid.Col span={4}>Build date</Grid.Col>
+                    <Grid.Col span={3}>日期</Grid.Col>
                     <Grid.Col span={8}>{new Date(appVersion.buildDate).toLocaleString()}</Grid.Col>
-                    <Grid.Col span={4}>Source code</Grid.Col>
-                    <Grid.Col span={8}><Box component="span" mr="sm"><Github /></Box><Anchor href="https://github.com/openscopeproject/trguing/" target="_blank" rel="noreferrer">github</Anchor></Grid.Col>
+                    <Grid.Col span={3}>源码</Grid.Col>
+                    <Grid.Col span={8}><Box component="span" mr="sm"><Github /></Box><Anchor href="https://github.com/jayzcoder/TrguiNG" target="_blank" rel="noreferrer">Github</Anchor></Grid.Col>
                     <Grid.Col mt="xl">{TAURI && <Anchor href="https://db-ip.com" target="_blank" rel="noreferrer">IP Geolocation by DB-IP</Anchor>}</Grid.Col>
                 </Grid>
             </Flex>
             <Divider px="sm" my="xl" />
             <Text align="center">
-                powered by
+                Powered by
             </Text>
             <Flex justify="center">
                 <Anchor href="https://react.dev/" target="_blank" rel="noreferrer"><ReactLogo /></Anchor>
