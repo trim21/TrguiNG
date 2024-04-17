@@ -411,7 +411,6 @@ export function TorrentTable(props: {
     modals: React.RefObject<ModalCallbacks>,
     torrents: Torrent[],
     setCurrentTorrent: (id: string) => void,
-    selectedTorrents: Set<number>,
     selectedReducer: TableSelectReducer,
     onColumnVisibilityChange: React.Dispatch<TorrentFieldsType[]>,
     scrollToRow?: { id: string },
@@ -449,7 +448,7 @@ export function TorrentTable(props: {
     }, [props.modals, serverConfig]);
 
     const serverSelected = useServerSelectedTorrents();
-    const getSelected = useCallback(() => Array.from(serverSelected).map(String), [serverSelected]);
+    const selected = useMemo(() => Array.from(serverSelected).map(String), [serverSelected]);
 
     const [info, setInfo, handler] = useContextMenu();
 
@@ -466,7 +465,7 @@ export function TorrentTable(props: {
                 columns: Columns,
                 data: props.torrents,
                 getRowId,
-                selected: getSelected(),
+                selected: selected,
                 selectedReducer: props.selectedReducer,
                 setCurrent: props.setCurrentTorrent,
                 onVisibilityChange,

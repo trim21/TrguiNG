@@ -92,7 +92,7 @@ export function TorrentsNames() {
 
     const allNames = useMemo<string[]>(() => {
         if (serverData.current == null || serverSelected.size === 0) {
-            return ["No torrent selected"];
+            return [];
         }
         return serverData.torrents.filter(
             (t) => serverSelected.has(t.id)).map((t) => t.name);

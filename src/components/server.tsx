@@ -249,12 +249,12 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                     {sessionIsLoading
                         ? <Loader size="xl" />
                         : sessionIsError
-                            ? <><Title color="red" order={1}>Failed to load session</Title>
+                            ? <><Title color="red" order={1}>加载会话失败</Title>
                                 <Title color="red" order={3}>{(sessionError as Error).message}</Title></>
                             : session?.["rpc-version"] === undefined
-                                ? <Title color="red" order={1}>Server does not appear to be transmission daemon</Title>
+                                ? <Title color="red" order={1}>获取 transmission 版本失败</Title>
                                 : rpcVersion < 14
-                                    ? <Title color="red" order={1}>Transmission version 2.40 or higher is required.</Title>
+                                    ? <Title color="red" order={1}>Transmission 版本低于 2.40</Title>
                                     : <></>}
                 </Flex>
             </Overlay>}
@@ -286,7 +286,9 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                                 torrents={torrents ?? []}
                                 currentFilters={currentFilters}
                                 setCurrentFilters={setCurrentFilters}
-                                setSearchTracker={setSearchTracker} />
+                                setSearchTracker={setSearchTracker}
+                                setCurrentTorrentId={setCurrentTorrentInt}
+                                selectedReducer={selectedReducer} />
                         </Box>
                         <Flex direction="column" h="100%" w="100%">
                             <span style={{width: "100%", height: "auto", fontSize:"small", paddingLeft: "0.2rem"}}>{statusTitle}</span>
@@ -304,7 +306,6 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                                  modals={modals}
                                  torrents={filteredTorrents}
                                  setCurrentTorrent={setCurrentTorrent}
-                                 selectedTorrents={selectedTorrents}
                                  selectedReducer={selectedReducer}
                                  onColumnVisibilityChange={setTableRequiredFields}
                                  scrollToRow={scrollToRow}
@@ -316,7 +317,6 @@ export function Server({ hostname, tabsRef }: ServerProps) {
                             modals={modals}
                             torrents={filteredTorrents}
                             setCurrentTorrent={setCurrentTorrent}
-                            selectedTorrents={selectedTorrents}
                             selectedReducer={selectedReducer}
                             onColumnVisibilityChange={setTableRequiredFields}
                             scrollToRow={scrollToRow}

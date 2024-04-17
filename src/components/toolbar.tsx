@@ -95,9 +95,9 @@ function useButtonHandlers(
                 },
                 {
                     onError: (e) => {
-                        console.log("Error running torrent update method", method, e);
+                        console.log("更新执行出错", method, e);
                         notifications.show({
-                            message: "Error updating torrent",
+                            message: "执行出错",
                             color: "red",
                         });
                     },
@@ -113,13 +113,13 @@ function useButtonHandlers(
                 {
                     onSuccess: () => {
                         notifications.show({
-                            message: "Priority is updated",
+                            message: "优先级已更新",
                             color: "green",
                         });
                     },
                     onError: (error) => {
                         notifications.show({
-                            title: "Failed to update priority",
+                            title: "优先级更新失败",
                             message: String(error),
                             color: "red",
                         });
@@ -229,6 +229,11 @@ function Toolbar(props: ToolbarProps) {
         ["mod + I", props.toggleDetailsPanel],
     ]);
 
+    const serverSelected = useServerSelectedTorrents();
+    const selected = useMemo(()=> {
+        return serverSelected?.size > 0;
+    }, [serverSelected]);
+
     return (
         <Flex w="100%" align="stretch">
             <Button.Group mx="sm">
@@ -247,51 +252,57 @@ function Toolbar(props: ToolbarProps) {
             <Button.Group mx="sm">
                 <ToolbarButton
                     title="开始 (F3)"
+                    disabled={!selected}
                     onClick={handlers.start} >
-                    <Icon.PlayCircleFill size="1.5rem" color={theme.colors.blue[6]} />
+                    <Icon.PlayCircleFill size="1.5rem" color={!selected ? theme.colors.gray[5] : theme.colors.blue[6]} />
                 </ToolbarButton>
                 <ToolbarButton
                     title="暂停 (F4)"
+                    disabled={!selected}
                     onClick={handlers.pause} >
-                    <Icon.PauseCircleFill size="1.5rem" color={theme.colors.blue[6]} />
+                    <Icon.PauseCircleFill size="1.5rem" color={!selected ? theme.colors.gray[5] : theme.colors.blue[6]} />
                 </ToolbarButton>
                 <ToolbarButton
                     title="删除 (del)"
+                    disabled={!selected}
                     onClick={handlers.remove}>
-                    <Icon.XCircleFill size="1.5rem" color={theme.colors.red[6]} />
+                    <Icon.XCircleFill size="1.5rem" color={!selected ? theme.colors.gray[5] : theme.colors.red[6]} />
                 </ToolbarButton>
             </Button.Group>
 
             <Button.Group mx="sm">
                 <ToolbarButton
                     title="队列上移"
+                    disabled={!selected}
                     onClick={handlers.queueUp} >
-                    <Icon.ArrowUpCircleFill size="1.5rem" color={theme.colors.green[8]} />
+                    <Icon.ArrowUpCircleFill size="1.5rem" color={!selected ? theme.colors.gray[5] : theme.colors.green[8]} />
                 </ToolbarButton>
                 <ToolbarButton
                     title="队列下移"
                     onClick={handlers.queueDown} >
-                    <Icon.ArrowDownCircleFill size="1.5rem" color={theme.colors.green[8]} />
+                    <Icon.ArrowDownCircleFill size="1.5rem" color={!selected ? theme.colors.gray[5] : theme.colors.green[8]} />
                 </ToolbarButton>
             </Button.Group>
 
             <Button.Group mx="sm">
                 <ToolbarButton
                     title="修改目录 (F6)"
+                    disabled={!selected}
                     onClick={handlers.move}>
-                    <Icon.FolderFill size="1.5rem" color={theme.colors.yellow[4]} stroke={theme.colors.yellow[5]} />
+                    <Icon.FolderFill size="1.5rem" color={!selected ? theme.colors.gray[5] : theme.colors.yellow[4]} stroke={!selected ? theme.colors.gray[5] : theme.colors.yellow[5]} />
                 </ToolbarButton>
                 <ToolbarButton
                     title="设置用户标签 (F7)"
+                    disabled={!selected}
                     onClick={handlers.setLabels} >
-                    <Icon.TagsFill size="1.5rem" color={theme.colors.blue[6]} />
+                    <Icon.TagsFill size="1.5rem" color={!selected ? theme.colors.gray[5] : theme.colors.blue[6]} />
                 </ToolbarButton>
 
                 <Menu shadow="md" width="10rem" withinPortal middlewares={{ shift: true, flip: false }}>
                     <Menu.Target>
-                        <ToolbarButton title="调整优先级">
+                        <ToolbarButton title="调整优先级" disabled={!selected}>
                             <PriorityIcon width="1.5rem" height="1.5rem"
-                                fill={theme.colors.yellow[theme.colorScheme === "dark" ? 4 : 6]} />
+                                fill={!selected ? theme.colors.gray[5] : (theme.colors.yellow[theme.colorScheme === "dark" ? 4 : 6])} />
                         </ToolbarButton>
                     </Menu.Target>
 
