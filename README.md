@@ -1,6 +1,11 @@
 
 ## 基于 [openscopeproject/TrguiNG](https://github.com/openscopeproject/TrguiNG) 汉化并增加部分功能
 
+### 更新 (240417a)
+1. fix: 体积支持 PB EB 展示
+2. fix: 工具栏的一些同步问题
+3. impr: version 页汉化
+
 ## 新增功能 (240416a)
 1. 分组体积展示（可在分组区右键关闭该功能）
 2. 双击全选分组，方便快捷操作（可在分组区右键关闭该功能）
