@@ -72,13 +72,6 @@ const statusFilters: StatusFilter[] = [
         icon: StatusIcons.Completed,
     },
     {
-        name: "正在做种",
-        filter: (t: Torrent) => {
-            return t.status === Status.seeding;
-        },
-        icon: StatusIcons.Completed,
-    },
-    {
         name: "正在校验",
         filter: (t: Torrent) => [
             Status.verifying,
