@@ -131,7 +131,7 @@ const AllFields: readonly TableField[] = [
         columnId: "peersGettingFromUs",
         accessorFn: (t) => t.peersGettingFromUs * 1e+6 + t.cachedPeersTotal,
     },
-    { name: "eta", label: "ETA", component: EtaField },
+    { name: "eta", label: "剩余时间", component: EtaField },
     { name: "uploadRatio", label: "分享率", component: PositiveNumberField },
     {
         name: "trackerStats",
