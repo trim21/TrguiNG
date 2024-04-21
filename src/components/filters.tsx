@@ -24,11 +24,13 @@ import * as StatusIcons from "./statusicons";
 import type { FilterSectionName, SectionsVisibility, StatusFilterName } from "../config";
 import { ConfigContext, ServerConfigContext } from "../config";
 import { Box, Button, Divider, Flex, Menu, Portal } from "@mantine/core";
-import {bytesToHumanReadableStr, eventHasModKey, useForceRender} from "trutil";
+import {bytesToHumanReadableStr, ensurePathDelimiter, eventHasModKey, useForceRender} from "trutil";
 import { useContextMenu } from "./contextmenu";
 import { MemoSectionsContextMenu, getSectionsMap } from "./sectionscontextmenu";
 import {useServerSelectedTorrents, useServerTorrentData} from "../rpc/torrent";
 import {TableSelectReducer} from "./tables/common";
+import {notifications} from "@mantine/notifications";
+import {copyToClipboard} from "../taurishim";
 
 export interface TorrentFilter {
     id: string,
@@ -231,10 +233,18 @@ function DirFilterRow(props: DirFilterRowProps) {
     const serverSelected = useServerSelectedTorrents();
     const dirTorrents = serverData.torrents.filter(filter);
     let dirSize = props.showSize ? bytesToHumanReadableStr(dirTorrents.reduce((p, t) => p + (t.sizeWhenDone as number), 0)) : ""
-
+    const [iconColor, setIconColor] = useState<string>("green");
+    const dirPath = ensurePathDelimiter(props.dir.path);
+    const onCopyPath = useCallback(() => {
+        copyToClipboard(dirPath);
+        notifications.show({
+            message: `已复制路径到剪切板:` + dirPath,
+            color: "green",
+        });
+    }, [dirPath])
     return (
         <Flex align="center" gap="sm" px="xs"
-            style={{ paddingLeft: `${props.dir.level * 1.4 + 0.25}em`, cursor: "default" }}
+            style={{ paddingLeft: `${props.dir.level * 1.2 + 0.2}rem`, cursor: "default" }}
             className={props.currentFilters.find((f) => f.id === props.id) !== undefined ? "selected" : ""}
             onClick={(event) => {
                 props.setCurrentFilters({
@@ -267,6 +277,17 @@ function DirFilterRow(props: DirFilterRowProps) {
             <div style={{ flexShrink: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{props.dir.name}</div>
             <div style={{ flexShrink: 0, fontSize: "small", opacity: 0.8 }}>{`(${props.dir.count})`}</div>
             {props.showSize && <div style={{ flexShrink: 0, marginLeft: "auto", fontSize: "small", opacity: 0.8 }}>{`[${dirSize}]`}</div>}
+            <Icon.FileEarmarkTextFill
+                style={{ flexShrink: 0, marginLeft: props.showSize?undefined:"auto" }}
+                title={"点击复制：" + dirPath}
+                size="1.1rem" cursor="pointer" opacity={0.9}
+                color={iconColor}
+                onMouseOver={()=>setIconColor("blue")}
+                onMouseOut={()=>setIconColor("green")}
+                onMouseDown={()=>setIconColor("gray")}
+                onMouseUp={()=>setIconColor("green")}
+                onClick={onCopyPath}
+            />
         </Flex>
     );
 }
