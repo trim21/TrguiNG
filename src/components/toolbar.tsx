@@ -358,7 +358,7 @@ function Toolbar(props: ToolbarProps) {
                     </Menu.Item>
                     <Menu.Item
                         onClick={props.toggleFiltersPanel} rightSection={<Kbd>{`${modKeyString()} O`}</Kbd>}>
-                        隐藏/展示过滤
+                        隐藏/展示分组
                     </Menu.Item>
                     <Menu.Item
                         onClick={props.toggleDetailsPanel} rightSection={<Kbd>{`${modKeyString()} I`}</Kbd>}>
