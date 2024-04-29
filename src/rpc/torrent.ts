@@ -36,7 +36,7 @@ export interface Torrent extends TorrentBase {
 function getTorrentError(t: TorrentBase): string {
     const torrentError = t.errorString as string;
 
-    const trackerMessages: string[] | undefined = t.trackerStats?.map((trackerStat: TrackerStats): string => {
+    const trackerMessages: string[] = t.trackerStats.map((trackerStat: TrackerStats): string => {
         let err = "";
         if (trackerStat.hasAnnounced as boolean && !(trackerStat.lastAnnounceSucceeded as boolean)) {
             err = trackerStat.lastAnnounceResult as string;
@@ -48,14 +48,18 @@ function getTorrentError(t: TorrentBase): string {
         }
     });
 
-    // in case torrent doesn't have any tracker
-    if ((typeof trackerMessages === "undefined") || trackerMessages.length === 0) {
+    // no tracker at all.
+    if (trackerMessages.length === 0) {
         return torrentError;
     }
 
     if (t.isPrivate as boolean) {
-        // any tracker return error.
+        // any tracker with error.
         const msg = trackerMessages.find(t => t !== "");
+        if (typeof msg === "undefined") {
+            return torrentError;
+        }
+
         if (msg !== "") {
             if (msg !== torrentError) {
                 // return torrent.errorString first.
