@@ -34,30 +34,50 @@ export interface Torrent extends TorrentBase {
 }
 
 function getTorrentError(t: TorrentBase): string {
-    let torrentError = t.errorString;
-    let trackerError = "";
-    let noTrackerError = false;
+    const torrentError = t.errorString as string;
 
-    for (const trackerStat of t.trackerStats) {
+    const trackerMessages: string[] | undefined = t.trackerStats?.map((trackerStat: TrackerStats): string => {
         let err = "";
         if (trackerStat.hasAnnounced as boolean && !(trackerStat.lastAnnounceSucceeded as boolean)) {
             err = trackerStat.lastAnnounceResult as string;
         }
         if (err === "" || err === "Success") {
-            noTrackerError = true;
-        } else if (trackerError === "") {
-            // If the torrent error string is equal to some tracker error string,
-            // then igonore the global error string
-            if (err === torrentError) torrentError = "";
-            trackerError = `Tracker: ${err}`;
+            return "";
+        } else {
+            return err;
+        }
+    });
+
+    // in case torrent doesn't have any tracker
+    if ((typeof trackerMessages === "undefined") || trackerMessages.length === 0) {
+        return torrentError;
+    }
+
+    if (t.isPrivate as boolean) {
+        // any tracker return error.
+        const msg = trackerMessages.find(t => t !== "");
+        if (msg !== "") {
+            if (msg !== torrentError) {
+                // return torrent.errorString first.
+                return torrentError;
+            }
+
+            return `Tracker: ${msg}`;
+        }
+        return torrentError;
+    }
+
+    // public torrent
+
+    // all tracker return error.
+    if (!trackerMessages.some(t => t === "")) {
+        const msg = trackerMessages[0];
+        if (msg === torrentError) {
+            return `Tracker: ${msg}`;
         }
     }
 
-    if (noTrackerError || t.status === Status.stopped) {
-        return torrentError;
-    } else {
-        return trackerError;
-    }
+    return torrentError;
 }
 
 export function getTrackerAnnounceState(tracker: TrackerStats) {
