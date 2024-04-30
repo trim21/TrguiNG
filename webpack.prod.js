@@ -22,6 +22,10 @@ import path from "path";
 import { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
 export default merge(common("production"), {
+    cache: {
+        type: "filesystem",
+        allowCollectingMemory: true,
+    },
     plugins: [
         new BundleAnalyzerPlugin({
             analyzerMode: "static",
