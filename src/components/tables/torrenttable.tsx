@@ -82,7 +82,7 @@ const AllFields: readonly TableField[] = [
         name: "name",
         label: "Name",
         component: NameField,
-        requiredFields: ["name", "error", "trackerStats", "leftUntilDone"] as TorrentFieldsType[],
+        requiredFields: ["name", "error", "isPrivate", "trackerStats", "leftUntilDone"] as TorrentFieldsType[],
     },
     { name: "totalSize", label: "Size", component: ByteSizeField },
     { name: "sizeWhenDone", label: "Size to download", component: ByteSizeField },

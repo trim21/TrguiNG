@@ -37,8 +37,12 @@ function getTorrentError(t: TorrentBase): string {
     const torrentError = t.errorString as string;
 
     const trackerMessages: string[] = t.trackerStats.map((trackerStat: TrackerStats): string => {
+        if (!(trackerStat.hasAnnounced as boolean)) {
+            return "";
+        }
+
         let err = "";
-        if (trackerStat.hasAnnounced as boolean && !(trackerStat.lastAnnounceSucceeded as boolean)) {
+        if (!(trackerStat.lastAnnounceSucceeded as boolean)) {
             err = trackerStat.lastAnnounceResult as string;
         }
         if (err === "" || err === "Success") {
