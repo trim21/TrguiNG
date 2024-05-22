@@ -23,6 +23,17 @@ export default merge(common("development"), {
     devtool: "source-map",
     devServer: {
         static: "./dist",
+        port: 9000,
+        proxy: {
+            "/transmission/rpc": {
+                target: "https://bt.omv.trim21.me",
+                changeOrigin: true,
+            },
+            "/rpc": {
+                target: "https://bt.omv.trim21.me/transmission/rpc",
+                changeOrigin: true,
+            },
+        },
         client: {
             overlay: true,
             progress: true,
