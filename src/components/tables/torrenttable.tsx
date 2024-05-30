@@ -424,7 +424,7 @@ export function LabelsField (props: TableFieldProps) {
     return <>
         {labels?.map((label) => <Badge key={label}
             radius="md" variant="filled" className="torrent-label white-outline"
-            style={{ "text-transform": "none" } as any}
+            style={{ textTransform: "none" }}
         >
             {label}
         </Badge>)}

@@ -6,11 +6,12 @@
   ],
   "type": "module",
   "scripts": {
+    "lint": "eslint ./src/ --fix",
     "tauri-dev": "tauri dev",
     "build": "tauri build",
     "build-bin": "tauri build -b none",
-    "webpack-serve": "webpack serve --config webpack.dev.js",
-    "webpack-dev": "webpack --config webpack.dev.js",
+    "serve": "webpack serve --config webpack.dev.js",
+    "dev": "webpack --config webpack.dev.js",
     "webpack-prod": "webpack --config webpack.prod.js",
     "info": "tauri info",
     "react-devtools": "npx react-devtools"
@@ -88,5 +89,6 @@
         "skipTypeImports": true
       }
     }
-  }
+  },
+  "packageManager": "yarn@1.22.22"
 }

@@ -16,7 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { BandwidthGroupFieldType, PeerStatsFieldsType, TorrentAllFieldsType, TrackerStatsFieldsType } from "./transmission";
+import type {
+    BandwidthGroupFieldType,
+    PeerStatsFieldsType,
+    TorrentAllFieldsType,
+    TrackerStatsFieldsType,
+} from "./transmission";
 import { Status } from "./transmission";
 import React, { useContext } from "react";
 import type { TransmissionClient } from "./client";
@@ -36,6 +41,11 @@ export interface Torrent extends TorrentBase {
 function getTorrentError(t: TorrentBase): string {
     const torrentError = t.errorString as string;
 
+    // no tracker at all.
+    if (t.trackerStats.length === 0) {
+        return torrentError;
+    }
+
     const trackerMessages: string[] = t.trackerStats.map((trackerStat: TrackerStats): string => {
         if (!(trackerStat.hasAnnounced as boolean)) {
             return "";
@@ -52,11 +62,6 @@ function getTorrentError(t: TorrentBase): string {
         }
     });
 
-    // no tracker at all.
-    if (trackerMessages.length === 0) {
-        return torrentError;
-    }
-
     if (t.isPrivate as boolean) {
         // any tracker with error.
         const msg = trackerMessages.find(t => t !== "");
@@ -65,13 +70,16 @@ function getTorrentError(t: TorrentBase): string {
         }
 
         if (msg !== "") {
-            if (msg !== torrentError) {
-                // return torrent.errorString first.
-                return torrentError;
+            if (torrentError !== "") {
+                if (msg !== torrentError) {
+                    // return torrent.errorString first.
+                    return torrentError;
+                }
             }
 
             return `Tracker: ${msg}`;
         }
+
         return torrentError;
     }
 
@@ -101,7 +109,7 @@ export function getTrackerAnnounceState(tracker: TrackerStats) {
 function getTrackerStatus(torrent: TorrentBase): string {
     const trackers = torrent.trackerStats as TrackerStats[];
     if (torrent.status === Status.stopped || trackers.length === 0) return "";
-    return getTrackerAnnounceState(trackers[0]);
+    return getTrackerAnnounceState(trackers.filter(x => !(x.isBackup as boolean))[0]);
 }
 
 const portRe = /:\d+$/;
@@ -120,14 +128,18 @@ function getTorrentMainTracker(t: TorrentBase): string {
 function getSeedsTotal(t: TorrentBase) {
     let seeds = t.trackerStats.length > 0 ? 0 : -1;
     t.trackerStats.forEach(
-        (tracker: TrackerStats) => { seeds = Math.max(seeds, tracker.seederCount as number); });
+        (tracker: TrackerStats) => {
+            seeds = Math.max(seeds, tracker.seederCount as number);
+        });
     return seeds;
 }
 
 function getPeersTotal(t: TorrentBase) {
     let peers = t.trackerStats.length > 0 ? 0 : -1;
     t.trackerStats.forEach(
-        (tracker: TrackerStats) => { peers = Math.max(peers, tracker.leecherCount as number); });
+        (tracker: TrackerStats) => {
+            peers = Math.max(peers, tracker.leecherCount as number);
+        });
     return peers;
 }
 
@@ -135,6 +147,10 @@ export async function processTorrent(t: TorrentBase, lookupIps: boolean, client:
     const peers = t.peers === undefined
         ? undefined
         : await Promise.all(t.peers.map(async (p: PeerStatsBase) => await processPeerStats(p, lookupIps, client)));
+
+    if (getTorrentError(t) !== "") {
+        console.log(t.name, getTorrentError(t));
+    }
 
     return {
         ...t,

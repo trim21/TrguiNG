@@ -18,7 +18,7 @@
 
 import React, { memo, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Torrent, TrackerStats } from "../rpc/torrent";
-import { bytesToHumanReadableStr, ensurePathDelimiter, fileSystemSafeName, secondsToHumanReadableStr, timestampToDateString } from "../trutil";
+import { bytesToHumanReadableStr, secondsToHumanReadableStr, timestampToDateString } from "../trutil";
 import { FileTreeTable, useUnwantedFiles } from "./tables/filetreetable";
 import { PiecesCanvas } from "./piecescanvas";
 import { ProgressBar } from "./progressbar";
@@ -27,7 +27,19 @@ import { TrackersTable } from "./tables/trackertable";
 import { PeersTable } from "./tables/peerstable";
 import { Status, type SessionStatEntry } from "rpc/transmission";
 import type { MantineTheme } from "@mantine/core";
-import { Anchor, Box, Flex, Container, Group, Table, Tabs, TextInput, LoadingOverlay, Grid, useMantineTheme } from "@mantine/core";
+import {
+    Anchor,
+    Box,
+    Flex,
+    Container,
+    Group,
+    Table,
+    Tabs,
+    TextInput,
+    LoadingOverlay,
+    Grid,
+    useMantineTheme,
+} from "@mantine/core";
 import * as Icon from "react-bootstrap-icons";
 import { CachedFileTree } from "cachedfiletree";
 import { useFileTree, useMutateTorrent, useSessionStats, useTorrentDetails } from "queries";
@@ -60,7 +72,7 @@ function DownloadBar(props: { torrent: Torrent }) {
     const nowStr = `${prefix}: ${now / 10}%`;
     return (
         <Box w="100%" my="0.5rem">
-            <ProgressBar now={now} max={1000} label={nowStr} />
+            <ProgressBar now={now} max={1000} label={nowStr}/>
         </Box>
     );
 }
@@ -69,7 +81,10 @@ interface DetailItemProps extends React.PropsWithChildren {
     name: string,
 }
 
-function DetailItem({ name, children }: DetailItemProps) {
+function DetailItem({
+    name,
+    children,
+}: DetailItemProps) {
     const theme = useMantineTheme();
 
     return (
@@ -132,7 +147,7 @@ function Peers(props: { torrent: Torrent }) {
 
 function TrackerUpdate(props: { torrent: Torrent }) {
     if (props.torrent.trackerStats.length === 0) return <></>;
-    const tracker = props.torrent.trackerStats[0] as TrackerStats;
+    const tracker = props.torrent.trackerStats.filter((x: TrackerStats) => x.announceState !== "")[0] as TrackerStats;
     const state = tracker.announceState;
     return <>{(state === 2 || state === 3) ? "-" : timestampToDateString(tracker.nextAnnounceTime)}</>;
 }
@@ -146,24 +161,25 @@ function TransferTable(props: { torrent: Torrent }) {
     return (
         <Container fluid>
             <Grid ref={ref} my="sm" sx={{ maxWidth: "100em" }} columns={rect.width > 850 ? 3 : 1}>
-                <DetailItem name="Status:"><StatusField {...props} fieldName="status" /></DetailItem>
+                <DetailItem name="Status:"><StatusField {...props} fieldName="status"/></DetailItem>
                 <DetailItem name="Error:">{props.torrent.cachedError}</DetailItem>
-                <DetailItem name="Remaining:">{`${secondsToHumanReadableStr(props.torrent.eta)} (${bytesToHumanReadableStr(props.torrent.leftUntilDone)})`}</DetailItem>
+                <DetailItem
+                    name="Remaining:">{`${secondsToHumanReadableStr(props.torrent.eta)} (${bytesToHumanReadableStr(props.torrent.leftUntilDone)})`}</DetailItem>
                 <DetailItem name="Downloaded:">{bytesToHumanReadableStr(props.torrent.downloadedEver)}</DetailItem>
                 <DetailItem name="Uploaded:">{bytesToHumanReadableStr(props.torrent.uploadedEver)}</DetailItem>
                 <DetailItem name="Wasted:"><Wasted {...props} /></DetailItem>
                 <DetailItem name="Download speed:"><DownloadSpeed {...props} /></DetailItem>
                 <DetailItem name="Upload speed:">{`${bytesToHumanReadableStr(props.torrent.rateUpload)}/s`}</DetailItem>
                 <DetailItem name="Share ratio:">{shareRatio}</DetailItem>
-                <DetailItem name="Download limit:"><SpeedLimit {...props} field="download" /></DetailItem>
-                <DetailItem name="Upload limit:"><SpeedLimit {...props} field="upload" /></DetailItem>
+                <DetailItem name="Download limit:"><SpeedLimit {...props} field="download"/></DetailItem>
+                <DetailItem name="Upload limit:"><SpeedLimit {...props} field="upload"/></DetailItem>
                 <DetailItem name="Bandwidth group:">{props.torrent.group}</DetailItem>
                 <DetailItem name="Seeds:"><Seeds {...props} /></DetailItem>
                 <DetailItem name="Peers:"><Peers {...props} /></DetailItem>
                 <DetailItem name="Max peers:">{props.torrent.maxConnectedPeers}</DetailItem>
-                <DetailItem name="Tracker:"><TrackerField {...props} fieldName="trackerStats" /></DetailItem>
+                <DetailItem name="Tracker:"><TrackerField {...props} fieldName="trackerStats"/></DetailItem>
                 <DetailItem name="Tracker update on:"><TrackerUpdate {...props} /></DetailItem>
-                <DetailItem name="Last active:"><DateField {...props} fieldName="activityDate" /></DetailItem>
+                <DetailItem name="Last active:"><DateField {...props} fieldName="activityDate"/></DetailItem>
             </Grid>
         </Container>
     );
@@ -216,15 +232,15 @@ const readonlyInputStyles = (theme: MantineTheme) => ({
 });
 
 function TorrentDetails(props: { torrent: Torrent }) {
-    const fullPath = ensurePathDelimiter(props.torrent.downloadDir) + fileSystemSafeName(props.torrent.name);
+    const fullPath = props.torrent.downloadDir;
 
     const [ref, rect] = useResizeObserver();
 
     return (
         <Container fluid>
             <Grid ref={ref} my="sm" sx={{ maxWidth: "100em" }} columns={rect.width > 850 ? 2 : 1}>
-                <DetailItem name="Full path:">
-                    <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={fullPath} />
+                <DetailItem name="Download Dir:">
+                    <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={fullPath}/>
                 </DetailItem>
                 <DetailItem name="Created:">
                     <div>
@@ -243,15 +259,17 @@ function TorrentDetails(props: { torrent: Torrent }) {
                 <DetailItem name="Total size:"><TotalSize {...props} /></DetailItem>
                 <DetailItem name="Pieces:"><Pieces {...props} /></DetailItem>
                 <DetailItem name="Hash:">
-                    <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.hashString} />
+                    <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly
+                        value={props.torrent.hashString}/>
                 </DetailItem>
-                <DetailItem name="Comment:"><Urlize text={props.torrent.comment} /></DetailItem>
-                <DetailItem name="Added on:"><DateField {...props} fieldName="addedDate" /></DetailItem>
-                <DetailItem name="Completed on:"><DateField {...props} fieldName="doneDate" /></DetailItem>
+                <DetailItem name="Comment:"><Urlize text={props.torrent.comment}/></DetailItem>
+                <DetailItem name="Added on:"><DateField {...props} fieldName="addedDate"/></DetailItem>
+                <DetailItem name="Completed on:"><DateField {...props} fieldName="doneDate"/></DetailItem>
                 <DetailItem name="Magnet link:">
-                    <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly value={props.torrent.magnetLink} />
+                    <TextInput styles={readonlyInputStyles} variant="unstyled" readOnly
+                        value={props.torrent.magnetLink}/>
                 </DetailItem>
-                <DetailItem name="Labels:"><LabelsField {...props} fieldName="labels" /></DetailItem>
+                <DetailItem name="Labels:"><LabelsField {...props} fieldName="labels"/></DetailItem>
             </Grid>
         </Container>
     );
@@ -296,7 +314,10 @@ function FileTreePane(props: { torrent: Torrent }) {
         () => new CachedFileTree(props.torrent.hashString, props.torrent.id),
         [props.torrent.hashString, props.torrent.id]);
 
-    const { data, refetch } = useFileTree("filetree", fileTree);
+    const {
+        data,
+        refetch,
+    } = useFileTree("filetree", fileTree);
 
     useEffect(() => {
         if (fileTree.initialized) {
@@ -323,7 +344,7 @@ function FileTreePane(props: { torrent: Torrent }) {
             fileTree={fileTree}
             data={data}
             downloadDir={props.torrent.downloadDir}
-            onCheckboxChange={updateUnwanted} />
+            onCheckboxChange={updateUnwanted}/>
     );
 }
 
@@ -355,7 +376,10 @@ function Stats(props: { stats: SessionStatEntry }) {
                 <td>{secondsToHumanReadableStr(props.stats.secondsActive)}</td>
             </tr>
             {props.stats.sessionCount > 1 &&
-                <tr><td>Sesssion count</td><td>{props.stats.sessionCount}</td></tr>}
+            <tr>
+                <td>Sesssion count</td>
+                <td>{props.stats.sessionCount}</td>
+            </tr>}
         </tbody>
     </Table>;
 }
@@ -370,9 +394,9 @@ function ServerStats() {
                     {sessionStats !== undefined
                         ? <Container fluid>
                             <TableNameRow>Session</TableNameRow>
-                            <Stats stats={sessionStats["current-stats"]} />
+                            <Stats stats={sessionStats["current-stats"]}/>
                             <TableNameRow>Cumulative</TableNameRow>
-                            <Stats stats={sessionStats["cumulative-stats"]} />
+                            <Stats stats={sessionStats["cumulative-stats"]}/>
                         </Container>
                         : <></>
                     }
@@ -386,31 +410,31 @@ const DetailsPanels = React.memo(function DetailsPanels({ torrent }: { torrent: 
     return (<>
         <Tabs.Panel value="General" h="100%">
             {torrent !== undefined
-                ? <GeneralPane torrent={torrent} />
+                ? <GeneralPane torrent={torrent}/>
                 : <></>}
         </Tabs.Panel>
         <Tabs.Panel value="Files" h="100%">
             {torrent !== undefined
-                ? <FileTreePane torrent={torrent} />
+                ? <FileTreePane torrent={torrent}/>
                 : <></>}
         </Tabs.Panel>
         <Tabs.Panel value="Pieces" h="100%">
             {torrent !== undefined
-                ? <PiecesCanvas torrent={torrent} />
+                ? <PiecesCanvas torrent={torrent}/>
                 : <></>}
         </Tabs.Panel>
         <Tabs.Panel value="Peers" h="100%">
             {torrent !== undefined
-                ? <PeersTable torrent={torrent} />
+                ? <PeersTable torrent={torrent}/>
                 : <></>}
         </Tabs.Panel>
         <Tabs.Panel value="Trackers" h="100%">
             {torrent !== undefined
-                ? <TrackersTable torrent={torrent} />
+                ? <TrackersTable torrent={torrent}/>
                 : <></>}
         </Tabs.Panel>
         <Tabs.Panel value="Server statistics" h="100%">
-            <ServerStats />
+            <ServerStats/>
         </Tabs.Panel>
     </>);
 });
@@ -420,14 +444,18 @@ function Details(props: DetailsProps) {
     const peersTableVisibility = config.getTableColumnVisibility("peers");
     const countryVisible = peersTableVisibility.country ?? true;
 
-    const { data: fetchedTorrent, isLoading } = useTorrentDetails(
+    const {
+        data: fetchedTorrent,
+        isLoading,
+    } = useTorrentDetails(
         props.torrentId ?? -1, props.torrentId !== undefined && props.updates, countryVisible);
 
     const [torrent, setTorrent] = useState<Torrent>();
 
     useEffect(() => {
-        if (props.torrentId === undefined) setTorrent(undefined);
-        else if (fetchedTorrent !== undefined) setTorrent(fetchedTorrent);
+        if (props.torrentId === undefined) {
+            setTorrent(undefined);
+        } else if (fetchedTorrent !== undefined) setTorrent(fetchedTorrent);
     }, [fetchedTorrent, props.torrentId]);
 
     const [tabs, setTabs] = useState(config.values.interface.detailsTabs);
@@ -462,58 +490,64 @@ function Details(props: DetailsProps) {
             <Tabs.List px="sm" pt="xs" onContextMenu={handler}>
                 <MemoSectionsContextMenu
                     sections={tabs} setSections={setTabs}
-                    contextMenuInfo={info} setContextMenuInfo={setInfo} />
+                    contextMenuInfo={info} setContextMenuInfo={setInfo}/>
                 {tabs[tabsMap.General].visible &&
                     <Tabs.Tab value="General" disabled={torrent === undefined} style={{ order: tabsMap.General }}>
                         <Group>
-                            <Icon.InfoCircle size="1.1rem" />
+                            <Icon.InfoCircle size="1.1rem"/>
                             General
                         </Group>
                     </Tabs.Tab>}
                 {tabs[tabsMap.Files].visible &&
                     <Tabs.Tab value="Files" disabled={torrent === undefined} style={{ order: tabsMap.Files }}>
                         <Group>
-                            <Icon.Files size="1.1rem" />
+                            <Icon.Files size="1.1rem"/>
                             {`Files${torrent !== undefined ? ` (${torrent.files.length as number})` : ""}`}
                         </Group>
                     </Tabs.Tab>}
                 {tabs[tabsMap.Pieces].visible &&
                     <Tabs.Tab value="Pieces" disabled={torrent === undefined} style={{ order: tabsMap.Pieces }}>
                         <Group>
-                            <Icon.Grid3x2 size="1.1rem" />
+                            <Icon.Grid3x2 size="1.1rem"/>
                             {`Pieces${torrent !== undefined ? ` (${torrent.pieceCount as number})` : ""}`}
                         </Group>
                     </Tabs.Tab>}
                 {tabs[tabsMap.Peers].visible &&
                     <Tabs.Tab value="Peers" disabled={torrent === undefined} style={{ order: tabsMap.Peers }}>
                         <Group>
-                            <Icon.People size="1.1rem" />
+                            <Icon.People size="1.1rem"/>
                             Peers
                         </Group>
                     </Tabs.Tab>}
                 {tabs[tabsMap.Trackers].visible &&
                     <Tabs.Tab value="Trackers" disabled={torrent === undefined} style={{ order: tabsMap.Trackers }}>
                         <Group>
-                            <Icon.Wifi size="1.1rem" />
+                            <Icon.Wifi size="1.1rem"/>
                             Trackers
                         </Group>
                     </Tabs.Tab>}
                 {tabs[tabsMap["<spacer>"]].visible &&
-                    <Box style={{ flexGrow: 1, order: tabsMap["<spacer>"] }} />}
+                    <Box style={{
+                        flexGrow: 1,
+                        order: tabsMap["<spacer>"],
+                    }}/>}
                 {tabs[tabsMap["Server statistics"]].visible &&
                     <Tabs.Tab value="Server statistics" style={{ order: tabsMap["Server statistics"] }}>
                         <Group>
-                            <Icon.ArrowDownUp size="1.1rem" />
+                            <Icon.ArrowDownUp size="1.1rem"/>
                             Server statistics
                         </Group>
                     </Tabs.Tab>}
             </Tabs.List>
-            <div style={{ flexGrow: 1, position: "relative" }}>
+            <div style={{
+                flexGrow: 1,
+                position: "relative",
+            }}>
                 <LoadingOverlay
                     visible={props.torrentId !== undefined && isLoading} transitionDuration={500}
                     loaderProps={{ size: "xl" }}
-                    overlayOpacity={0.35} />
-                <DetailsPanels torrent={torrent} />
+                    overlayOpacity={0.35}/>
+                <DetailsPanels torrent={torrent}/>
             </div>
         </Tabs>
     );
